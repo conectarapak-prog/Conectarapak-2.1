@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { generateProjectSuggestions } from '../services/geminiService';
 
 const data = [
   { name: 'Ene', value: 40 },
@@ -16,6 +17,19 @@ const data = [
 export const PredictiveAnalysis: React.FC = () => {
   const [goal, setGoal] = useState(10000);
   const [duration, setDuration] = useState(30);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiFeedback, setAiFeedback] = useState<string | null>(null);
+
+  const handleAiOptimization = async () => {
+    setAiLoading(true);
+    const feedback = await generateProjectSuggestions({
+      title: "EcoMochila Solar 2.0",
+      goal,
+      duration
+    });
+    setAiFeedback(feedback || null);
+    setAiLoading(false);
+  };
 
   return (
     <div className="flex flex-col gap-10 animate-fade-in">
@@ -77,16 +91,6 @@ export const PredictiveAnalysis: React.FC = () => {
                   <YAxis hide />
                   <Tooltip 
                     cursor={{ fill: 'transparent' }}
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        return (
-                          <div className="bg-stone-900 text-white p-2 rounded text-xs font-bold">
-                            {payload[0].value}% Probabilidad
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
                   />
                   <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                     {data.map((entry, index) => (
@@ -101,9 +105,6 @@ export const PredictiveAnalysis: React.FC = () => {
 
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-earth-card text-white p-8 rounded-3xl shadow-xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-10">
-              <span className="material-symbols-outlined text-8xl">tune</span>
-            </div>
             <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
               <span className="material-symbols-outlined text-primary">analytics</span>
               Simulador IA
@@ -141,41 +142,32 @@ export const PredictiveAnalysis: React.FC = () => {
                 />
               </div>
 
-              <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
-                <p className="text-xs font-bold text-stone-400 mb-2">Impacto IA Proyectado:</p>
-                <div className="flex items-center gap-2 text-primary">
-                  <span className="material-symbols-outlined text-lg">trending_up</span>
-                  <span className="text-sm font-extrabold uppercase">Probabilidad Alta</span>
-                </div>
-                <p className="text-[11px] text-stone-300 mt-2 leading-relaxed italic">
-                  "Reducir el objetivo a $8,500 podría aumentar tu probabilidad de éxito al 85%."
-                </p>
-              </div>
-
-              <button className="w-full bg-white/10 hover:bg-white/20 border border-white/20 py-3 rounded-xl text-sm font-bold transition-all">
-                Aplicar Cambios al Proyecto
+              <button 
+                onClick={handleAiOptimization}
+                disabled={aiLoading}
+                className="w-full bg-primary py-3 rounded-xl text-sm font-bold transition-all hover:bg-primary-hover disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {aiLoading ? (
+                  <span className="animate-spin material-symbols-outlined">sync</span>
+                ) : (
+                  <span className="material-symbols-outlined">auto_awesome</span>
+                )}
+                {aiLoading ? 'Analizando...' : 'Generar Optimización IA'}
               </button>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-earth-card border border-stone-200 dark:border-stone-800 p-6 rounded-3xl">
-            <h3 className="text-sm font-extrabold dark:text-white uppercase tracking-widest mb-4 flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-xl animate-pulse">auto_awesome</span>
-              IA Copilot
-            </h3>
-            <div className="space-y-4">
-              <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-900 border border-stone-100 dark:border-stone-800">
-                <h4 className="text-xs font-bold dark:text-white">Optimizar Título</h4>
-                <p className="text-[11px] text-stone-500 mt-1">Títulos de 5-7 palabras convierten un 12% mejor.</p>
-                <button className="mt-3 text-[11px] font-extrabold text-primary hover:underline uppercase tracking-wider">Ver Sugerencias</button>
-              </div>
-              <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-900 border border-stone-100 dark:border-stone-800">
-                <h4 className="text-xs font-bold dark:text-white">Añadir Video Pitch</h4>
-                <p className="text-[11px] text-stone-500 mt-1">Los proyectos con video tienen un 50% más de éxito.</p>
-                <button className="mt-3 text-[11px] font-extrabold text-primary hover:underline uppercase tracking-wider">Generar Guion IA</button>
+          {aiFeedback && (
+            <div className="bg-white dark:bg-earth-card border border-primary/30 p-6 rounded-3xl shadow-lg animate-fade-in">
+              <h3 className="text-sm font-extrabold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+                <span className="material-symbols-outlined">psychology</span>
+                Recomendaciones Gemini
+              </h3>
+              <div className="space-y-4 text-xs leading-relaxed whitespace-pre-wrap dark:text-stone-300">
+                {aiFeedback}
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

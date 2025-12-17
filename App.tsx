@@ -5,6 +5,7 @@ import { ProjectDiscovery } from './pages/ProjectDiscovery';
 import { ProjectDetail } from './pages/ProjectDetail';
 import { AdminModeration } from './pages/AdminModeration';
 import { PredictiveAnalysis } from './pages/PredictiveAnalysis';
+import { Recommendations } from './pages/Recommendations';
 import { View, Project } from './types';
 
 const App: React.FC = () => {
@@ -37,6 +38,8 @@ const App: React.FC = () => {
         return <AdminModeration />;
       case 'analysis':
         return <PredictiveAnalysis />;
+      case 'recommendations':
+        return <Recommendations />;
       default:
         return (
           <div className="flex flex-col items-center justify-center py-20 opacity-50">

@@ -83,7 +83,7 @@ export const Home: React.FC<{ setView: (v: any) => void }> = ({ setView }) => {
         </div>
       </section>
 
-      {/* Regional News Section */}
+      {/* Regional News Section - FIXED IMAGES */}
       <section className="bg-white dark:bg-earth-surface py-24 px-10">
         <div className="max-w-[1440px] mx-auto">
           <div className="flex justify-between items-center mb-12">
@@ -99,20 +99,38 @@ export const Home: React.FC<{ setView: (v: any) => void }> = ({ setView }) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {MOCK_NEWS.map((news) => (
               <div key={news.id} className="flex flex-col group cursor-pointer">
-                <div className="relative aspect-[16/10] rounded-[2.5rem] overflow-hidden mb-6 shadow-xl">
-                  <img src={news.image} alt={news.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                  <div className="absolute top-4 left-4">
-                    <span className="px-4 py-1.5 rounded-full bg-white/90 dark:bg-earth-card/90 backdrop-blur-md text-[10px] font-black uppercase tracking-widest text-primary shadow-sm">
+                {/* Image Container with Fallback Background */}
+                <div className="relative aspect-[16/10] rounded-[2.5rem] overflow-hidden mb-6 shadow-xl bg-stone-100 dark:bg-stone-800 border border-stone-100 dark:border-stone-800">
+                  <img 
+                    src={news.image} 
+                    alt={news.title} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                    loading="lazy"
+                  />
+                  {/* Category Tag Overlay */}
+                  <div className="absolute top-5 left-5">
+                    <span className="px-4 py-2 rounded-full bg-white/95 dark:bg-earth-card/95 backdrop-blur-md text-[9px] font-black uppercase tracking-[0.2em] text-primary shadow-lg border border-primary/10">
                       {news.category}
                     </span>
                   </div>
+                  {/* Hover Overlay */}
+                  <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <div className="size-14 bg-white rounded-full flex items-center justify-center shadow-2xl scale-75 group-hover:scale-100 transition-transform">
+                      <span className="material-symbols-outlined text-primary font-bold">arrow_forward</span>
+                    </div>
+                  </div>
                 </div>
+                
                 <div className="space-y-3 px-2">
-                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">{news.date} • {news.tag}</span>
-                  <h4 className="text-xl font-bold dark:text-white leading-tight group-hover:text-primary transition-colors">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">{news.date}</span>
+                    <span className="size-1 bg-stone-300 rounded-full"></span>
+                    <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{news.tag}</span>
+                  </div>
+                  <h4 className="text-xl font-bold dark:text-white leading-tight group-hover:text-primary transition-colors duration-300">
                     {news.title}
                   </h4>
-                  <p className="text-stone-500 dark:text-stone-400 text-sm leading-relaxed line-clamp-2">
+                  <p className="text-stone-500 dark:text-stone-400 text-sm leading-relaxed line-clamp-2 font-medium">
                     {news.excerpt}
                   </p>
                 </div>
@@ -129,7 +147,7 @@ export const Home: React.FC<{ setView: (v: any) => void }> = ({ setView }) => {
             <div>
               <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-4">Mapeo de Impacto</h2>
               <h3 className="text-5xl font-extrabold dark:text-white tracking-tighter">Actores de la <span className="text-stone-400">Región</span></h3>
-              <p className="text-stone-500 dark:text-stone-400 mt-6 text-lg leading-relaxed">
+              <p className="text-stone-500 dark:text-stone-400 mt-6 text-lg leading-relaxed font-medium">
                 Visualiza la red de colaboración que impulsa la sustentabilidad en Tarapacá. Articulamos el sector público, privado, la academia y la ciudadanía.
               </p>
             </div>
@@ -137,7 +155,7 @@ export const Home: React.FC<{ setView: (v: any) => void }> = ({ setView }) => {
             <div className="p-8 bg-primary/5 border border-primary/20 rounded-[2.5rem] space-y-4">
               <h4 className="text-sm font-black uppercase tracking-widest text-primary">Hazte visible en el mapa</h4>
               <p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-medium">
-                Al registrarte, tu organización se suma a nuestro grafo de impacto territorial. Aplicaremos filtros estratégicos para generar métricas de interés que optimicen la toma de decisiones en Tarapacá.
+                Al registrarte, tu organización se suma a nuestro grafo de impacto territorial. Aplicaremos filtros estratégicos para generar métricas de interés que optimicen la toma de decisiones.
               </p>
               <button 
                 onClick={() => setView('login')}
@@ -212,7 +230,7 @@ export const Home: React.FC<{ setView: (v: any) => void }> = ({ setView }) => {
         </div>
       </section>
 
-      {/* NEW: Collaborators and Sponsors Section */}
+      {/* Collaborators and Sponsors Section */}
       <section className="bg-stone-50 dark:bg-earth-dark/40 py-24 px-10 border-y border-stone-200 dark:border-stone-800">
         <div className="max-w-[1440px] mx-auto">
           <div className="text-center mb-16 space-y-4">

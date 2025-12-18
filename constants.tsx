@@ -69,29 +69,29 @@ export const MOCK_NEWS = [
   {
     id: 1,
     title: "Nueva planta de reciclaje fotovoltaico en Pozo Almonte",
-    category: "Tecnología",
+    category: "TECNOLOGÍA",
     tag: "Energía",
-    image: "https://images.unsplash.com/photo-1509391366360-fe5bb6583e2c?auto=format&fit=crop&q=80&w=800",
-    date: "12 Oct, 2024",
-    excerpt: "Consorcio público-privado inaugura la primera planta de tratamiento de paneles solares en desuso de la región."
+    image: "https://images.unsplash.com/photo-1509391366360-fe5bb6583e2c?auto=format&fit=crop&q=80&w=1200",
+    date: "12 OCT, 2024",
+    excerpt: "Consorcio público-privado inaugura la primera planta de tratamiento de paneles solares en desuso de la región de Tarapacá."
   },
   {
     id: 2,
     title: "UNAP lanza programa de mentoría para startups circulares",
-    category: "Academia",
+    category: "ACADEMIA",
     tag: "Educación",
-    image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=800",
-    date: "08 Oct, 2024",
-    excerpt: "La Universidad Arturo Prat abre convocatoria para proyectos que busquen resolver brechas en la logística inversa."
+    image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=1200",
+    date: "08 OCT, 2024",
+    excerpt: "La Universidad Arturo Prat abre convocatoria para proyectos que busquen resolver brechas en la logística inversa regional."
   },
   {
     id: 3,
     title: "Gremio de Hotelería de Iquique elimina plásticos de un solo uso",
-    category: "Emprendimiento",
+    category: "EMPRENDIMIENTO",
     tag: "Turismo",
-    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800",
-    date: "05 Oct, 2024",
-    excerpt: "Más de 30 establecimientos se suman a la red de 'Hoteles Smart' con certificación de residuos cero."
+    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=1200",
+    date: "05 OCT, 2024",
+    excerpt: "Más de 30 establecimientos se suman a la red de 'Hoteles Smart' con certificación de residuos cero y circularidad."
   }
 ];
 

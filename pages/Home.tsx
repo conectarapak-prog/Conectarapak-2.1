@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { MOCK_NEWS, MAP_ACTORS } from '../constants';
+import { MOCK_NEWS, MAP_ACTORS, SPONSORS } from '../constants';
 
 export const Home: React.FC<{ setView: (v: any) => void }> = ({ setView }) => {
   const [activeActor, setActiveActor] = useState<typeof MAP_ACTORS[0] | null>(null);
@@ -83,7 +83,7 @@ export const Home: React.FC<{ setView: (v: any) => void }> = ({ setView }) => {
         </div>
       </section>
 
-      {/* NEW: Regional News Section */}
+      {/* Regional News Section */}
       <section className="bg-white dark:bg-earth-surface py-24 px-10">
         <div className="max-w-[1440px] mx-auto">
           <div className="flex justify-between items-center mb-12">
@@ -122,7 +122,7 @@ export const Home: React.FC<{ setView: (v: any) => void }> = ({ setView }) => {
         </div>
       </section>
 
-      {/* NEW: Interactive Map Section */}
+      {/* Interactive Map Section */}
       <section className="py-24 px-10 max-w-[1440px] mx-auto w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
           <div className="lg:col-span-5 space-y-8">
@@ -134,14 +134,24 @@ export const Home: React.FC<{ setView: (v: any) => void }> = ({ setView }) => {
               </p>
             </div>
 
-            <div className="space-y-4">
-              {['Público', 'Privado', 'Académico', 'Gremio', 'ONG'].map((type) => (
-                <div key={type} className="flex items-center justify-between p-4 bg-white dark:bg-earth-card border border-stone-100 dark:border-stone-800 rounded-2xl hover:border-primary transition-all cursor-default shadow-sm">
-                  <div className="flex items-center gap-4">
-                    <div className="size-2 rounded-full bg-primary shadow-[0_0_8px_rgba(89,158,57,0.8)]"></div>
-                    <span className="text-sm font-bold dark:text-white">{type}</span>
-                  </div>
-                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Activos</span>
+            <div className="p-8 bg-primary/5 border border-primary/20 rounded-[2.5rem] space-y-4">
+              <h4 className="text-sm font-black uppercase tracking-widest text-primary">Hazte visible en el mapa</h4>
+              <p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-medium">
+                Al registrarte, tu organización se suma a nuestro grafo de impacto territorial. Aplicaremos filtros estratégicos para generar métricas de interés que optimicen la toma de decisiones en Tarapacá.
+              </p>
+              <button 
+                onClick={() => setView('login')}
+                className="w-full bg-primary text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-primary-hover transition-all shadow-lg shadow-primary/10"
+              >
+                Sumar mi Organización
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {['Público', 'Privado', 'Académico', 'Gremio'].map((type) => (
+                <div key={type} className="flex items-center gap-3 p-3 bg-white dark:bg-earth-card border border-stone-100 dark:border-stone-800 rounded-xl">
+                  <div className="size-2 rounded-full bg-primary shadow-[0_0_8px_rgba(89,158,57,0.8)]"></div>
+                  <span className="text-[10px] font-black uppercase tracking-widest dark:text-white">{type}</span>
                 </div>
               ))}
             </div>
@@ -149,16 +159,13 @@ export const Home: React.FC<{ setView: (v: any) => void }> = ({ setView }) => {
 
           <div className="lg:col-span-7">
             <div className="relative bg-stone-100 dark:bg-stone-900 rounded-[4rem] aspect-square lg:aspect-video overflow-hidden border border-stone-200 dark:border-stone-800 shadow-2xl">
-              {/* Fake Map Background */}
               <div className="absolute inset-0 opacity-20 dark:opacity-30">
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/graphy.png')]"></div>
-                {/* Visual Representation of Coastline/Geography */}
                 <svg className="w-full h-full text-stone-400" viewBox="0 0 100 100" fill="none" preserveAspectRatio="none">
                   <path d="M40,0 L42,10 L38,20 L45,35 L40,50 L43,70 L35,85 L38,100" stroke="currentColor" strokeWidth="0.5"/>
                 </svg>
               </div>
 
-              {/* Interactive Pins */}
               {MAP_ACTORS.map((actor) => (
                 <div 
                   key={actor.id}
@@ -173,14 +180,13 @@ export const Home: React.FC<{ setView: (v: any) => void }> = ({ setView }) => {
                       <span className="material-symbols-outlined text-primary text-xl font-bold">{actor.icon}</span>
                     </div>
 
-                    {/* Tooltip */}
                     <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-48 bg-earth-surface text-white p-4 rounded-2xl shadow-2xl border border-white/10 transition-all pointer-events-none z-20 ${
                       activeActor?.id === actor.id ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                     }`}>
                       <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">{actor.type}</p>
                       <p className="text-sm font-bold leading-tight">{actor.name}</p>
                       <div className="mt-2 flex items-center gap-1 text-[8px] font-bold text-stone-400 uppercase">
-                        <span className="size-1 rounded-full bg-green-500"></span> Conectado
+                        <span className="size-1 rounded-full bg-green-500"></span> Activo Smart
                       </div>
                     </div>
                   </div>
@@ -190,15 +196,15 @@ export const Home: React.FC<{ setView: (v: any) => void }> = ({ setView }) => {
               <div className="absolute bottom-8 left-8 right-8 bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-3xl flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="size-10 bg-primary rounded-xl flex items-center justify-center text-white">
-                    <span className="material-symbols-outlined">map</span>
+                    <span className="material-symbols-outlined">analytics</span>
                   </div>
                   <div>
-                    <p className="text-xs font-black text-white uppercase tracking-widest">Mapa Interactivo</p>
-                    <p className="text-[10px] text-stone-300">Explora los nodos estratégicos de Tarapacá Smart</p>
+                    <p className="text-xs font-black text-white uppercase tracking-widest">Métricas Territoriales</p>
+                    <p className="text-[10px] text-stone-300">Explora la densidad de impacto por actor</p>
                   </div>
                 </div>
                 <button className="bg-white text-earth-surface px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
-                  Pantalla Completa
+                  Ver Dashboard Mapa
                 </button>
               </div>
             </div>
@@ -206,8 +212,59 @@ export const Home: React.FC<{ setView: (v: any) => void }> = ({ setView }) => {
         </div>
       </section>
 
+      {/* NEW: Collaborators and Sponsors Section */}
+      <section className="bg-stone-50 dark:bg-earth-dark/40 py-24 px-10 border-y border-stone-200 dark:border-stone-800">
+        <div className="max-w-[1440px] mx-auto">
+          <div className="text-center mb-16 space-y-4">
+            <h2 className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">Propósito Compartido</h2>
+            <h3 className="text-5xl font-extrabold dark:text-white tracking-tighter">Nuestros <span className="text-stone-400">Aliados Estratégicos</span></h3>
+            <p className="text-stone-500 dark:text-stone-400 max-w-2xl mx-auto font-medium">
+              Instituciones y empresas que impulsan el desarrollo sostenible en la Región de Tarapacá.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 items-center">
+            {SPONSORS.map((sponsor, i) => (
+              <div 
+                key={i} 
+                className="group relative flex flex-col items-center justify-center p-8 bg-white dark:bg-earth-card border border-stone-100 dark:border-stone-800 rounded-[2rem] hover:shadow-2xl hover:border-primary/30 transition-all cursor-pointer"
+              >
+                <div className="h-16 w-full flex items-center justify-center grayscale group-hover:grayscale-0 transition-all duration-500 opacity-60 group-hover:opacity-100">
+                  <img 
+                    src={sponsor.logo} 
+                    alt={sponsor.name} 
+                    className="max-h-full max-w-full object-contain"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(sponsor.name)}&background=f0f0f0&color=599E39&bold=true`;
+                    }}
+                  />
+                </div>
+                <div className="mt-4 text-center">
+                   <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 group-hover:text-primary transition-colors">{sponsor.name}</p>
+                </div>
+                {/* Status Indicator */}
+                <div className="absolute top-4 right-4 size-2 rounded-full bg-primary/20 group-hover:bg-primary transition-colors"></div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-20 flex flex-col items-center">
+            <div className="p-10 bg-earth-surface text-white rounded-[3rem] w-full max-w-4xl flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl relative overflow-hidden group">
+               <div className="absolute top-0 right-0 p-20 -mr-20 -mt-20 bg-primary/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000"></div>
+               <div className="relative z-10">
+                 <h4 className="text-2xl font-black tracking-tight mb-2">¿Quieres ser parte de la red?</h4>
+                 <p className="text-stone-400 text-sm max-w-md font-medium">Únete como colaborador estratégico o auspiciador para potenciar el impacto circular en la región.</p>
+               </div>
+               <button className="relative z-10 bg-white text-earth-surface px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-primary hover:text-white transition-all shadow-xl">
+                 Conviértete en Aliado
+               </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Statistics Section */}
-      <section className="bg-earth-surface py-20 mt-12">
+      <section className="bg-earth-surface py-20">
         <div className="max-w-[1440px] mx-auto px-10 flex flex-wrap justify-between gap-12">
           {[
             { label: 'Proyectos Activos', value: '124+' },

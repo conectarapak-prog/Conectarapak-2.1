@@ -102,3 +102,12 @@ export const MAP_ACTORS = [
   { id: 4, name: "Gobernación Regional", type: "Público", x: "50%", y: "55%", icon: "account_balance" },
   { id: 5, name: "Hub Tecnológico Tarapacá", type: "ONG", x: "55%", y: "60%", icon: "hub" },
 ];
+
+export const SPONSORS = [
+  { name: "Teck Quebrada Blanca", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Teck_Resources_Logo.svg/1200px-Teck_Resources_Logo.svg.png" },
+  { name: "SQM", logo: "https://sqm.com/wp-content/themes/sqm-theme/images/logo-sqm.png" },
+  { name: "Collahuasi", logo: "https://www.collahuasi.cl/wp-content/uploads/2021/05/logo-collahuasi-new.png" },
+  { name: "ZOFRI", logo: "https://www.zofri.cl/Portal/Zofri/img/logo-zofri.png" },
+  { name: "ITP", logo: "https://itp.cl/wp-content/uploads/2020/09/Logo-ITP-01.png" },
+  { name: "Gore Tarapacá", logo: "https://www.goretarapaca.gov.cl/wp-content/uploads/2021/07/LOGO-GORE-TARAPACA-WEB.png" }
+];

@@ -1,17 +1,22 @@
 
 import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
+import { Login } from './components/Login';
+import { Home } from './pages/Home';
 import { ProjectDiscovery } from './pages/ProjectDiscovery';
 import { ProjectDetail } from './pages/ProjectDetail';
 import { AdminModeration } from './pages/AdminModeration';
 import { PredictiveAnalysis } from './pages/PredictiveAnalysis';
 import { Recommendations } from './pages/Recommendations';
-import { View, Project } from './types';
+import { Education } from './pages/Education';
+import { View, Project, User } from './types';
 
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<View>('discovery');
+  const [currentView, setCurrentView] = useState<View>('home');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [darkMode, setDarkMode] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     if (darkMode) {
@@ -27,32 +32,45 @@ const App: React.FC = () => {
     window.scrollTo(0, 0);
   };
 
+  const handleLogin = (newUser: User) => {
+    setUser(newUser);
+    setCurrentView('home');
+  };
+
   const renderView = () => {
+    // Si el usuario intenta acceder a una vista protegida sin login
+    const protectedViews: View[] = ['admin', 'analysis', 'recommendations'];
+    if (protectedViews.includes(currentView) && !user) {
+      return <Login onLogin={handleLogin} />;
+    }
+
+    // RBAC: Verificación de permisos específicos
+    if (currentView === 'admin' && user?.role !== 'advisor') {
+      return <div className="p-20 text-center font-bold">Acceso Denegado. Solo Asesores.</div>;
+    }
+    if (currentView === 'analysis' && user?.role !== 'entrepreneur') {
+      return <div className="p-20 text-center font-bold">Acceso Denegado. Solo Emprendedores.</div>;
+    }
+
     switch (currentView) {
-      case 'discovery':
+      case 'login':
+        return <Login onLogin={handleLogin} />;
       case 'home':
-        return <ProjectDiscovery onProjectClick={navigateToProject} />;
+        return <Home setView={setCurrentView} />;
+      case 'discovery':
+        return <ProjectDiscovery onProjectClick={navigateToProject} searchTerm={searchTerm} />;
       case 'detail':
-        return selectedProject ? <ProjectDetail project={selectedProject} /> : <ProjectDiscovery onProjectClick={navigateToProject} />;
+        return selectedProject ? <ProjectDetail project={selectedProject} /> : <ProjectDiscovery onProjectClick={navigateToProject} searchTerm={searchTerm} />;
       case 'admin':
         return <AdminModeration />;
       case 'analysis':
         return <PredictiveAnalysis />;
       case 'recommendations':
         return <Recommendations />;
+      case 'education':
+        return <Education />;
       default:
-        return (
-          <div className="flex flex-col items-center justify-center py-20 opacity-50">
-            <span className="material-symbols-outlined text-6xl">construction</span>
-            <p className="text-xl font-bold mt-4 uppercase tracking-widest">En Construcción</p>
-            <button 
-              onClick={() => setCurrentView('discovery')}
-              className="mt-6 text-primary font-bold underline"
-            >
-              Volver al inicio
-            </button>
-          </div>
-        );
+        return <Home setView={setCurrentView} />;
     }
   };
 
@@ -63,9 +81,12 @@ const App: React.FC = () => {
         setView={setCurrentView} 
         darkMode={darkMode}
         toggleDarkMode={() => setDarkMode(!darkMode)}
+        onSearchChange={setSearchTerm}
+        user={user}
+        onLogout={() => setUser(null)}
       />
       
-      <main className="flex-1 w-full max-w-[1440px] mx-auto px-4 md:px-10 py-10">
+      <main className={`flex-1 w-full ${currentView === 'home' ? '' : 'max-w-[1440px] mx-auto px-4 md:px-10 py-10'}`}>
         {renderView()}
       </main>
 

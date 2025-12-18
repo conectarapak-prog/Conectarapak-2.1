@@ -1,7 +1,6 @@
 
 import { GoogleGenAI } from "@google/genai";
 
-// Inicialización centralizada siguiendo los guidelines
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const generateProjectSuggestions = async (projectData: { title: string, goal: number, duration: number }) => {
@@ -31,12 +30,30 @@ export const getCircularEconomyAdvice = async (query: string) => {
       model: 'gemini-3-flash-preview',
       contents: query,
       config: {
-        systemInstruction: "Eres un asesor experto en Economía Circular de la plataforma CONECTARAPAK. REGLA DE FORMATO: Siempre que des un listado de funciones, tareas o pasos, DEBES usar numeración clara (1., 2., 3.) y separar cada punto con dos saltos de línea (\n\n). Usa negritas para los títulos de cada punto. Tu objetivo es que la información sea extremadamente fácil de leer y escanear visualmente.",
+        systemInstruction: "Eres un asesor experto en Economía Circular de la plataforma CONECTARAPAK. REGLA DE FORMATO: Siempre que des un listado de funciones, tareas o pasos, DEBES usar numeración clara (1., 2., 3.) y separar cada punto con dos saltos de línea (\n\n). Usa negritas para los títulos de cada punto.",
       }
     });
     return response.text;
   } catch (error) {
     return "Lo siento, tuve un problema conectando con mi base de conocimientos.";
+  }
+};
+
+export const getEducationalContent = async (topic: string) => {
+  const ai = getAI();
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Explica el concepto de '${topic}' en el contexto de la economía circular para un emprendedor. 
+      Usa un lenguaje sencillo, da un ejemplo práctico y termina con una 'Tarea de Acción'. 
+      Usa numeración para separar secciones.`,
+      config: {
+        systemInstruction: "Eres un profesor de sostenibilidad amable y experto. Tu misión es educar sobre economía circular de forma práctica y visual.",
+      }
+    });
+    return response.text;
+  } catch (error) {
+    return "Error al obtener material educativo.";
   }
 };
 

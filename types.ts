@@ -1,5 +1,13 @@
 
-export type View = 'home' | 'discovery' | 'detail' | 'analysis' | 'admin' | 'recommendations' | 'education' | 'edit';
+export type View = 'home' | 'discovery' | 'detail' | 'analysis' | 'admin' | 'recommendations' | 'education' | 'edit' | 'login';
+
+export type UserRole = 'entrepreneur' | 'investor_natural' | 'investor_legal' | 'advisor' | 'none';
+
+export interface User {
+  name: string;
+  role: UserRole;
+  avatar?: string;
+}
 
 export interface Project {
   id: string;

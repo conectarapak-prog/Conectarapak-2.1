@@ -15,6 +15,14 @@ export const ProjectDiscovery: React.FC<DiscoveryProps> = ({ onProjectClick, sea
   const [carbonData, setCarbonData] = useState<{ co2: number, water: number, waste: number, level: string, summary: string } | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoadingFootprint, setIsLoadingFootprint] = useState(false);
+  const [hoveredFootprintId, setHoveredFootprintId] = useState<string | null>(null);
+
+  // Estados para el contacto con emprendedor
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [contactProject, setContactProject] = useState<Project | null>(null);
+  const [contactForm, setContactForm] = useState({ message: '' });
+  const [isSending, setIsSending] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const categories = ['Todos', 'Tecnología', 'Arte', 'Impacto Social', 'Ecología Circular'];
 
@@ -39,6 +47,34 @@ export const ProjectDiscovery: React.FC<DiscoveryProps> = ({ onProjectClick, sea
       setCarbonData(result);
     }
     setIsLoadingFootprint(false);
+  };
+
+  const handleOpenContact = (e: React.MouseEvent, project: Project) => {
+    e.stopPropagation();
+    setContactProject(project);
+    setValidationError(null);
+    setIsContactModalOpen(true);
+  };
+
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validación: mensaje no vacío
+    if (!contactForm.message.trim()) {
+      setValidationError('El mensaje no puede estar vacío.');
+      return;
+    }
+
+    setValidationError(null);
+    setIsSending(true);
+    
+    // Simulación de envío
+    setTimeout(() => {
+      setIsSending(false);
+      setIsContactModalOpen(false);
+      setContactForm({ message: '' });
+      alert('Mensaje enviado con éxito al emprendedor.');
+    }, 1500);
   };
 
   return (
@@ -88,14 +124,31 @@ export const ProjectDiscovery: React.FC<DiscoveryProps> = ({ onProjectClick, sea
                   {project.category}
                 </div>
                 
-                {/* Botón Calculadora Huella */}
-                <button 
-                  onClick={(e) => handleCalculateFootprint(e, project)}
-                  className="absolute bottom-4 right-4 size-10 bg-primary/90 hover:bg-primary text-white backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 group/btn"
-                  title="Calcular Huella de Carbono (IA)"
+                <div 
+                  className="absolute bottom-4 right-4 z-20"
+                  onMouseEnter={() => setHoveredFootprintId(project.id)}
+                  onMouseLeave={() => setHoveredFootprintId(null)}
                 >
-                  <span className="material-symbols-outlined text-xl">eco</span>
-                </button>
+                  <button 
+                    onClick={(e) => handleCalculateFootprint(e, project)}
+                    className="size-10 bg-primary/90 hover:bg-primary text-white backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
+                  >
+                    <span className="material-symbols-outlined text-xl">eco</span>
+                  </button>
+
+                  {hoveredFootprintId === project.id && (
+                    <div className="absolute bottom-full right-0 mb-4 w-56 bg-white/95 dark:bg-earth-card/95 backdrop-blur-xl p-4 rounded-2xl shadow-2xl border border-stone-100 dark:border-white/10 animate-[fade-up_0.2s_ease-out] pointer-events-none origin-bottom-right">
+                       <div className="flex items-center gap-2 mb-2">
+                          <span className="material-symbols-outlined text-primary text-sm">auto_awesome</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-primary">Huella de Carbono</span>
+                       </div>
+                       <p className="text-[10px] font-medium text-stone-500 dark:text-stone-300 leading-relaxed">
+                         Calcula el impacto ambiental del proyecto con IA.
+                       </p>
+                       <div className="absolute top-full right-4 w-3 h-3 bg-white/95 dark:bg-earth-card/95 rotate-45 -mt-1.5 border-r border-b border-stone-100 dark:border-white/10"></div>
+                    </div>
+                  )}
+                </div>
                 
                 <button className="absolute top-4 right-4 size-8 bg-white/90 dark:bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center text-stone-500 hover:text-red-500 transition-colors">
                   <span className="material-symbols-outlined text-xl">favorite</span>
@@ -109,6 +162,15 @@ export const ProjectDiscovery: React.FC<DiscoveryProps> = ({ onProjectClick, sea
                 <p className="text-stone-500 dark:text-stone-400 text-sm mt-3 line-clamp-2 leading-relaxed">
                   {project.description}
                 </p>
+
+                {/* BOTÓN CONTACTAR EMPRENDEDOR */}
+                <button 
+                  onClick={(e) => handleOpenContact(e, project)}
+                  className="mt-6 w-full py-3 px-4 border-2 border-primary text-primary hover:bg-primary hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-base">forum</span>
+                  Contactar al Emprendedor
+                </button>
                 
                 <div className="mt-auto pt-6 space-y-4">
                   <div className="w-full bg-stone-100 dark:bg-stone-800 h-2 rounded-full overflow-hidden">
@@ -220,6 +282,101 @@ export const ProjectDiscovery: React.FC<DiscoveryProps> = ({ onProjectClick, sea
           </div>
         </div>
       )}
+
+      {/* MODAL DE CONTACTO CON EMPRENDEDOR */}
+      {isContactModalOpen && contactProject && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 md:p-10 bg-black/70 backdrop-blur-md animate-fade-in">
+          <div className="bg-white dark:bg-earth-card w-full max-w-xl rounded-[3rem] shadow-2xl overflow-hidden border border-stone-200 dark:border-stone-800">
+            <div className="p-8 bg-stone-50 dark:bg-stone-900 border-b border-stone-100 dark:border-stone-800 flex justify-between items-center">
+              <div className="flex items-center gap-4">
+                <div className="size-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                  <span className="material-symbols-outlined text-3xl">contact_mail</span>
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black dark:text-white tracking-tighter">Contactar Emprendedor</h3>
+                  <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1">
+                    Enviando mensaje a {contactProject.author}
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsContactModalOpen(false)}
+                className="size-10 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 flex items-center justify-center text-stone-400 transition-colors"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleSendMessage} className="p-10 space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2 block ml-2">Destinatario</label>
+                  <div className="bg-stone-50 dark:bg-stone-800/50 py-4 px-6 rounded-2xl text-sm font-bold text-stone-600 dark:text-stone-300 border border-stone-100 dark:border-stone-800">
+                    {contactProject.author.toLowerCase().replace(/\s/g, '')}@conectarapak.cl
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2 block ml-2">Asunto del Proyecto</label>
+                  <div className="bg-stone-50 dark:bg-stone-800/50 py-4 px-6 rounded-2xl text-sm font-bold text-stone-600 dark:text-stone-300 border border-stone-100 dark:border-stone-800">
+                    Interés en: {contactProject.title}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2 block ml-2">Tu Mensaje</label>
+                  <textarea 
+                    required
+                    value={contactForm.message}
+                    onChange={(e) => {
+                      setContactForm({ ...contactForm, message: e.target.value });
+                      if (e.target.value.trim()) setValidationError(null);
+                    }}
+                    placeholder="Escribe tu propuesta o consulta para el emprendedor..."
+                    className={`w-full bg-stone-50 dark:bg-stone-900 border-2 rounded-2xl py-4 px-6 text-sm dark:text-white h-40 resize-none transition-all ${
+                      validationError ? 'border-red-500 focus:border-red-500' : 'border-transparent focus:border-primary'
+                    }`}
+                  />
+                  {validationError && (
+                    <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest mt-2 ml-2">
+                      {validationError}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button 
+                  type="button"
+                  onClick={() => setIsContactModalOpen(false)}
+                  className="flex-1 py-4 bg-stone-100 dark:bg-stone-800 text-stone-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-stone-200 transition-all"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  disabled={isSending || !contactForm.message.trim()}
+                  className="flex-1 py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-3"
+                >
+                  {isSending ? (
+                    <span className="material-symbols-outlined animate-spin">refresh</span>
+                  ) : (
+                    <span className="material-symbols-outlined">send</span>
+                  )}
+                  {isSending ? 'Enviando...' : 'Enviar Mensaje'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes fade-up {
+          from { opacity: 0; transform: translateY(10px) scale(0.95); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      `}</style>
     </div>
   );
 };

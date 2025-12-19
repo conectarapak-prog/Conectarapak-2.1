@@ -13,11 +13,40 @@ const LogoIcon = () => (
 
 export const Contact: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
+  const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
+
+  const validateEmail = (value: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!value) {
+      setEmailError('El correo electrónico es obligatorio.');
+      return false;
+    } else if (!emailRegex.test(value)) {
+      setEmailError('Por favor, ingresa una dirección de correo válida.');
+      return false;
+    }
+    setEmailError('');
+    return true;
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEmail(value);
+    if (emailError) validateEmail(value);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 5000);
+    const isEmailValid = validateEmail(email);
+
+    if (isEmailValid) {
+      setSubmitted(true);
+      setTimeout(() => {
+        setSubmitted(false);
+        setEmail('');
+      }, 5000);
+      // Aquí iría la lógica de envío al backend
+    }
   };
 
   return (
@@ -55,10 +84,21 @@ export const Contact: React.FC = () => {
                 Correo electrónico <span className="text-red-300">*</span>
               </label>
               <input 
-                type="email" 
+                type="text" 
                 required
-                className="w-full bg-white border-none rounded-sm py-3 px-4 focus:ring-2 focus:ring-accent"
+                value={email}
+                onChange={handleEmailChange}
+                onBlur={() => validateEmail(email)}
+                placeholder="ejemplo@correo.com"
+                className={`w-full bg-white border-none rounded-sm py-3 px-4 focus:ring-2 transition-all ${
+                  emailError ? 'ring-2 ring-red-400 focus:ring-red-400' : 'focus:ring-accent'
+                }`}
               />
+              {emailError && (
+                <p className="text-red-200 text-[10px] font-bold uppercase tracking-widest animate-pulse">
+                  {emailError}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -91,9 +131,18 @@ export const Contact: React.FC = () => {
             <div>
               <button 
                 type="submit"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-md font-bold text-sm transition-all shadow-lg active:scale-95"
+                className={`bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-md font-bold text-sm transition-all shadow-lg active:scale-95 flex items-center gap-2 ${
+                  submitted ? 'bg-green-600 hover:bg-green-700' : ''
+                }`}
               >
-                {submitted ? '¡Mensaje Enviado!' : 'Enviar'}
+                {submitted ? (
+                  <>
+                    <span className="material-symbols-outlined text-sm">check_circle</span>
+                    ¡Mensaje Enviado!
+                  </>
+                ) : (
+                  'Enviar'
+                )}
               </button>
             </div>
           </form>

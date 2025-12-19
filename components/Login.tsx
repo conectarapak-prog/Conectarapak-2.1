@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { UserRole, User } from '../types';
 
 interface LoginProps {
@@ -7,6 +7,9 @@ interface LoginProps {
 }
 
 export const Login: React.FC<LoginProps> = ({ onLogin }) => {
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
+
   const roles: { role: UserRole, title: string, desc: string, icon: string, color: string }[] = [
     { 
       role: 'entrepreneur', 
@@ -38,33 +41,57 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     }
   ];
 
+  const handleRoleSelect = (role: UserRole, title: string) => {
+    if (!name.trim()) {
+      setError('Por favor, ingresa tu nombre antes de continuar.');
+      return;
+    }
+    onLogin({ 
+      name: name, 
+      role: role, 
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name || 'anon'}` 
+    });
+  };
+
   return (
-    <div className="fixed inset-0 z-[100] bg-earth-surface/90 backdrop-blur-xl flex items-center justify-center p-6 animate-fade-in">
-      <div className="max-w-4xl w-full bg-white dark:bg-earth-card rounded-[3.5rem] p-12 shadow-2xl overflow-hidden relative border border-white/10">
-        <div className="absolute top-0 right-0 p-20 -mr-20 -mt-20 bg-primary/10 rounded-full blur-3xl"></div>
+    <div className="fixed inset-0 z-[100] bg-earth-surface/95 backdrop-blur-xl flex items-center justify-center p-6 animate-fade-in">
+      <div className="max-w-4xl w-full bg-white dark:bg-earth-card rounded-[3.5rem] p-8 md:p-12 shadow-2xl overflow-hidden relative border border-white/10">
+        <div className="absolute top-0 right-0 p-24 -mr-24 -mt-24 bg-primary/10 rounded-full blur-3xl"></div>
         
-        <div className="relative z-10 text-center mb-12">
+        <div className="relative z-10 text-center mb-10">
           <div className="inline-flex items-center gap-2 mb-4">
-            <span className="material-symbols-outlined text-primary text-4xl font-bold">change_circle</span>
+            <span className="material-symbols-outlined text-primary text-5xl font-bold">change_circle</span>
             <h2 className="text-2xl font-black dark:text-white tracking-tighter">CONECTARAPAK SMART</h2>
           </div>
-          <h1 className="text-4xl font-extrabold dark:text-white tracking-tight">Bienvenido al Ecosistema</h1>
-          <p className="text-stone-500 dark:text-stone-400 mt-2 font-medium">Selecciona tu perfil para personalizar tu experiencia territorial.</p>
+          <h1 className="text-4xl font-extrabold dark:text-white tracking-tight">Acceso al Ecosistema</h1>
+          <p className="text-stone-500 dark:text-stone-400 mt-2 font-medium">Valida tu identidad y selecciona tu rol estratégico.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+        <div className="relative z-10 mb-8 max-w-md mx-auto">
+          <label className="block text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2 ml-4">Nombre Completo o Razón Social</label>
+          <input 
+            type="text" 
+            value={name}
+            onChange={(e) => { setName(e.target.value); setError(''); }}
+            placeholder="Ej: Juan Pérez o EcoIndustrias S.A."
+            className={`w-full bg-stone-100 dark:bg-stone-900 border-2 rounded-2xl py-4 px-6 text-lg focus:ring-4 focus:ring-primary/20 transition-all ${error ? 'border-red-500' : 'border-transparent focus:border-primary'}`}
+          />
+          {error && <p className="text-red-500 text-[10px] font-bold mt-2 ml-4 uppercase tracking-widest">{error}</p>}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
           {roles.map((r) => (
             <button
               key={r.role}
-              onClick={() => onLogin({ name: `Usuario ${r.title}`, role: r.role, avatar: `https://picsum.photos/seed/${r.role}/100/100` })}
-              className="flex items-start gap-5 p-6 rounded-[2rem] border-2 border-stone-100 dark:border-stone-800 bg-white/50 dark:bg-earth-card/50 hover:border-primary hover:scale-[1.02] transition-all text-left group"
+              onClick={() => handleRoleSelect(r.role, r.title)}
+              className="flex items-start gap-4 p-5 rounded-[2rem] border-2 border-stone-100 dark:border-stone-800 bg-white/50 dark:bg-earth-card/50 hover:border-primary hover:scale-[1.01] transition-all text-left group"
             >
-              <div className={`size-14 shrink-0 rounded-2xl ${r.color} text-white flex items-center justify-center shadow-lg group-hover:rotate-6 transition-transform`}>
-                <span className="material-symbols-outlined text-3xl">{r.icon}</span>
+              <div className={`size-12 shrink-0 rounded-xl ${r.color} text-white flex items-center justify-center shadow-lg group-hover:rotate-6 transition-transform`}>
+                <span className="material-symbols-outlined text-2xl">{r.icon}</span>
               </div>
               <div>
-                <h3 className="text-lg font-bold dark:text-white mb-1">{r.title}</h3>
-                <p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-medium">
+                <h3 className="text-base font-bold dark:text-white mb-1">{r.title}</h3>
+                <p className="text-[11px] text-stone-500 dark:text-stone-400 leading-tight font-medium opacity-80">
                   {r.desc}
                 </p>
               </div>
@@ -72,9 +99,11 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           ))}
         </div>
 
-        <p className="text-center mt-10 text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em]">
-          Protección de Datos Nivel 4 • Protocolo RBAC Activado
-        </p>
+        <div className="text-center mt-10">
+          <p className="text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em]">
+            Seguridad Biométrica Simulada • Protocolo RBAC v4.2
+          </p>
+        </div>
       </div>
     </div>
   );

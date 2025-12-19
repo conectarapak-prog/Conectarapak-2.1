@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Project } from '../types';
 
 interface ProjectDetailProps {
@@ -7,6 +7,38 @@ interface ProjectDetailProps {
 }
 
 export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+    const shareText = `¡Mira este increíble proyecto circular en CONECTARAPAK: ${project.title}!`;
+    
+    // Priorizar el uso de la API nativa de compartir si está disponible (Mobile y Browsers modernos)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `CONECTARAPAK - ${project.title}`,
+          text: project.description,
+          url: shareUrl,
+        });
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Error al compartir:', error);
+        }
+      }
+    } else {
+      // Fallback: Copiar al portapapeles para navegadores que no soportan share nativo (Desktop mayoritariamente)
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        // Resetear el estado de "Copiado" después de 3 segundos
+        setTimeout(() => setCopied(false), 3000);
+      } catch (err) {
+        console.error('No se pudo copiar el enlace: ', err);
+      }
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-10 animate-fade-in">
       <div className="text-center space-y-4">
@@ -87,8 +119,19 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project }) => {
                 <button className="flex-1 border border-stone-200 dark:border-stone-800 rounded-xl h-12 flex items-center justify-center font-bold text-sm hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors">
                   <span className="material-symbols-outlined mr-2">bookmark</span> Guardar
                 </button>
-                <button className="flex-1 border border-stone-200 dark:border-stone-800 rounded-xl h-12 flex items-center justify-center font-bold text-sm hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors">
-                  <span className="material-symbols-outlined mr-2">share</span> Compartir
+                <button 
+                  onClick={handleShare}
+                  className={`flex-1 border border-stone-200 dark:border-stone-800 rounded-xl h-12 flex items-center justify-center font-bold text-sm transition-all duration-300 ${
+                    copied 
+                    ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' 
+                    : 'hover:bg-stone-50 dark:hover:bg-stone-800'
+                  }`}
+                  title="Compartir en redes sociales"
+                >
+                  <span className="material-symbols-outlined mr-2">
+                    {copied ? 'check_circle' : 'share'}
+                  </span> 
+                  {copied ? '¡Copiado!' : 'Compartir'}
                 </button>
               </div>
             </div>

@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { MOCK_PROJECTS } from '../constants';
 import { Project } from '../types';
+import { estimateCarbonImpact } from '../services/geminiService';
 
 interface DiscoveryProps {
   onProjectClick: (p: Project) => void;
@@ -10,6 +11,10 @@ interface DiscoveryProps {
 
 export const ProjectDiscovery: React.FC<DiscoveryProps> = ({ onProjectClick, searchTerm }) => {
   const [activeTab, setActiveTab] = useState('Todos');
+  const [calculatingProject, setCalculatingProject] = useState<Project | null>(null);
+  const [carbonData, setCarbonData] = useState<{ co2: number, water: number, waste: number, level: string, summary: string } | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoadingFootprint, setIsLoadingFootprint] = useState(false);
 
   const categories = ['Todos', 'Tecnología', 'Arte', 'Impacto Social', 'Ecología Circular'];
 
@@ -22,8 +27,22 @@ export const ProjectDiscovery: React.FC<DiscoveryProps> = ({ onProjectClick, sea
     });
   }, [activeTab, searchTerm]);
 
+  const handleCalculateFootprint = async (e: React.MouseEvent, project: Project) => {
+    e.stopPropagation();
+    setCalculatingProject(project);
+    setIsModalOpen(true);
+    setIsLoadingFootprint(true);
+    setCarbonData(null);
+
+    const result = await estimateCarbonImpact(project.title, project.description);
+    if (result) {
+      setCarbonData(result);
+    }
+    setIsLoadingFootprint(false);
+  };
+
   return (
-    <div className="flex flex-col gap-10 animate-fade-in">
+    <div className="flex flex-col gap-10 animate-fade-in relative">
       <section className="flex flex-col gap-6">
         <div className="max-w-2xl">
           <h2 className="text-4xl font-extrabold tracking-tight dark:text-white">
@@ -68,6 +87,16 @@ export const ProjectDiscovery: React.FC<DiscoveryProps> = ({ onProjectClick, sea
                 <div className="absolute top-4 left-4 bg-white/90 dark:bg-black/60 backdrop-blur-sm px-3 py-1 rounded-lg text-xs font-bold shadow-sm">
                   {project.category}
                 </div>
+                
+                {/* Botón Calculadora Huella */}
+                <button 
+                  onClick={(e) => handleCalculateFootprint(e, project)}
+                  className="absolute bottom-4 right-4 size-10 bg-primary/90 hover:bg-primary text-white backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 group/btn"
+                  title="Calcular Huella de Carbono (IA)"
+                >
+                  <span className="material-symbols-outlined text-xl">eco</span>
+                </button>
+                
                 <button className="absolute top-4 right-4 size-8 bg-white/90 dark:bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center text-stone-500 hover:text-red-500 transition-colors">
                   <span className="material-symbols-outlined text-xl">favorite</span>
                 </button>
@@ -108,6 +137,87 @@ export const ProjectDiscovery: React.FC<DiscoveryProps> = ({ onProjectClick, sea
            <span className="material-symbols-outlined text-5xl text-stone-300 mb-4">search_off</span>
            <p className="text-stone-500 dark:text-stone-400 font-bold">No encontramos proyectos que coincidan con tu búsqueda.</p>
            <button onClick={() => { setActiveTab('Todos'); }} className="mt-4 text-primary font-bold hover:underline">Limpiar filtros</button>
+        </div>
+      )}
+
+      {/* Modal de Huella de Carbono */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-10 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-earth-card w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border border-stone-200 dark:border-stone-800">
+            <div className="p-8 border-b border-stone-100 dark:border-stone-800 flex justify-between items-center bg-primary/5">
+              <div className="flex items-center gap-4">
+                <div className="size-12 bg-primary rounded-2xl flex items-center justify-center text-white">
+                  <span className="material-symbols-outlined text-3xl">analytics</span>
+                </div>
+                <div>
+                  <h3 className="text-xl font-black dark:text-white uppercase tracking-tighter">Impacto Ambiental IA</h3>
+                  <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Estimación predictiva por Gemini</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="size-10 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 flex items-center justify-center text-stone-400 transition-colors"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="p-10 space-y-8 overflow-y-auto max-h-[70vh] custom-scrollbar">
+              {isLoadingFootprint ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-6">
+                  <div className="size-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-lg font-bold text-stone-500 animate-pulse">Analizando ciclo de vida del proyecto...</p>
+                </div>
+              ) : carbonData ? (
+                <div className="animate-fade-in space-y-10">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <div className="bg-stone-50 dark:bg-stone-900 p-6 rounded-3xl border border-stone-100 dark:border-stone-800 text-center">
+                      <span className="material-symbols-outlined text-primary text-3xl mb-2">co2</span>
+                      <p className="text-2xl font-black dark:text-white">{carbonData.co2}kg</p>
+                      <p className="text-[9px] font-black text-stone-400 uppercase tracking-widest">CO2 Evitado / Año</p>
+                    </div>
+                    <div className="bg-stone-50 dark:bg-stone-900 p-6 rounded-3xl border border-stone-100 dark:border-stone-800 text-center">
+                      <span className="material-symbols-outlined text-blue-500 text-3xl mb-2">water_drop</span>
+                      <p className="text-2xl font-black dark:text-white">{carbonData.water}L</p>
+                      <p className="text-[9px] font-black text-stone-400 uppercase tracking-widest">Agua Ahorrada / Año</p>
+                    </div>
+                    <div className="bg-stone-50 dark:bg-stone-900 p-6 rounded-3xl border border-stone-100 dark:border-stone-800 text-center">
+                      <span className="material-symbols-outlined text-amber-500 text-3xl mb-2">delete_sweep</span>
+                      <p className="text-2xl font-black dark:text-white">{carbonData.waste}kg</p>
+                      <p className="text-[9px] font-black text-stone-400 uppercase tracking-widest">Residuos Reducidos</p>
+                    </div>
+                  </div>
+
+                  <div className="p-8 bg-earth-surface text-white rounded-[2.5rem] relative overflow-hidden">
+                    <div className={`absolute top-4 right-6 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                      carbonData.level === 'Alto' ? 'bg-green-500' : carbonData.level === 'Medio' ? 'bg-blue-500' : 'bg-stone-500'
+                    }`}>
+                      Impacto: {carbonData.level}
+                    </div>
+                    <h4 className="text-sm font-black uppercase tracking-[0.2em] text-primary mb-4 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm">auto_awesome</span> Análisis de Sostenibilidad
+                    </h4>
+                    <p className="text-sm leading-relaxed text-stone-300 font-medium italic">
+                      "{carbonData.summary}"
+                    </p>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <button className="flex-1 py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all">
+                      Apoyar este impacto
+                    </button>
+                    <button className="flex-1 py-4 bg-stone-100 dark:bg-stone-800 text-stone-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-stone-200 transition-all">
+                      Ver metodología
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-10 text-red-500 font-bold">
+                   Error al obtener el cálculo. Por favor intenta de nuevo.
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

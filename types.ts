@@ -1,5 +1,5 @@
 
-export type View = 'home' | 'discovery' | 'detail' | 'analysis' | 'admin' | 'recommendations' | 'education' | 'edit' | 'login';
+export type View = 'home' | 'discovery' | 'detail' | 'analysis' | 'admin' | 'recommendations' | 'education' | 'edit' | 'login' | 'dashboard' | 'contact';
 
 export type UserRole = 'entrepreneur' | 'investor_natural' | 'investor_legal' | 'advisor' | 'none';
 

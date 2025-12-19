@@ -12,11 +12,33 @@ interface NavbarProps {
   onLogout: () => void;
 }
 
+const LogoIcon = () => (
+  <svg viewBox="0 0 100 100" className="size-10 fill-none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="50" r="48" fill="white" className="dark:fill-stone-800" stroke="#599E39" strokeWidth="2"/>
+    <path d="M20 70 L40 45 L55 60 L75 35 L85 70 Z" fill="#437A28"/>
+    <path d="M15 75 L35 55 L50 68 L70 45 L85 75 Z" fill="#599E39" opacity="0.8"/>
+    <circle cx="50" cy="30" r="12" fill="#F59E0B"/>
+    <g stroke="#F59E0B" strokeWidth="1.5" strokeLinecap="round">
+      <line x1="50" y1="12" x2="50" y2="16"/>
+      <line x1="50" y1="44" x2="50" y2="48"/>
+      <line x1="68" y1="30" x2="72" y2="30"/>
+      <line x1="28" y1="30" x2="32" y2="30"/>
+      <line x1="62.7" y1="17.3" x2="65.5" y2="20.1"/>
+      <line x1="34.5" y1="39.9" x2="37.3" y2="42.7"/>
+      <line x1="65.5" y1="39.9" x2="62.7" y2="42.7"/>
+      <line x1="37.3" y1="20.1" x2="34.5" y2="17.3"/>
+    </g>
+    <path d="M30 80 Q50 95 70 80" stroke="#599E39" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+);
+
 export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, darkMode, toggleDarkMode, onSearchChange, user, onLogout }) => {
   const getNavItems = () => {
     const base = [
       { id: 'home', label: 'Inicio' },
-      { id: 'discovery', label: 'Explorar' }
+      { id: 'dashboard', label: 'Panel' },
+      { id: 'discovery', label: 'Explorar' },
+      { id: 'contact', label: 'Contacto' }
     ];
 
     if (!user) return base;
@@ -36,16 +58,16 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, darkMode, 
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 dark:bg-earth-card/95 backdrop-blur-md border-b border-stone-200 dark:border-stone-800 shadow-sm px-6 lg:px-10 py-3">
-      <div className="max-w-[1440px] mx-auto flex items-center justify-between">
+      <div className="max-w-[1440px] auto flex items-center justify-between">
         <div className="flex items-center gap-8">
           <div 
             className="flex items-center gap-3 cursor-pointer group" 
-            onClick={() => setView('home')}
+            onClick={() => setView('dashboard')}
           >
-            <div className="size-8 text-primary group-hover:scale-110 transition-transform">
-              <span className="material-symbols-outlined text-3xl font-bold">recycling</span>
+            <div className="group-hover:scale-110 transition-transform duration-300">
+              <LogoIcon />
             </div>
-            <h1 className="text-lg font-extrabold tracking-tighter hidden sm:block dark:text-white uppercase font-display">
+            <h1 className="text-xl font-black tracking-tighter hidden sm:block dark:text-white uppercase font-display text-stone-800">
               CONECTARAPAK
             </h1>
           </div>

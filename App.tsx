@@ -98,7 +98,7 @@ const App: React.FC = () => {
 
   const renderView = () => {
     if (currentView === 'login') return <Login onLogin={handleLogin} />;
-    const isPublic = ['home', 'dashboard', 'discovery', 'detail', 'contact'].includes(currentView);
+    const isPublic = ['home', 'dashboard', 'discovery', 'detail', 'login', 'contact'].includes(currentView);
     if (!isPublic && !user) return <Login onLogin={handleLogin} />;
 
     if (user && !checkAccess(currentView, user.role)) {
@@ -115,7 +115,7 @@ const App: React.FC = () => {
       case 'home':
         return <Home setView={setCurrentView} />;
       case 'dashboard':
-        return <Dashboard setView={setCurrentView} />;
+        return <Dashboard setView={setCurrentView} userRole={user?.role} />;
       case 'discovery':
         return <ProjectDiscovery onProjectClick={navigateToProject} searchTerm={searchTerm} />;
       case 'detail':
@@ -129,7 +129,7 @@ const App: React.FC = () => {
       case 'education':
         return <Education />;
       case 'contact':
-        return <Contact />;
+        return <Contact setView={setCurrentView} />;
       default:
         return <Home setView={setCurrentView} />;
     }

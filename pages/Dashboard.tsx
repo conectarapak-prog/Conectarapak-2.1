@@ -1,11 +1,14 @@
 
 import React from 'react';
+import { AISimulator } from '../components/AISimulator';
+import { UserRole } from '../types';
 
 interface DashboardProps {
   setView: (v: any) => void;
+  userRole?: UserRole;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ setView, userRole }) => {
   const ctas = [
     {
       title: 'Publica tu proyecto',
@@ -104,6 +107,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
            </button>
         </div>
       </section>
+
+      {/* NEW AI SIMULATOR SECTION - Personalized by User Role */}
+      {userRole && (
+        <section className="max-w-5xl mx-auto">
+          <div className="mb-10 text-center">
+            <h3 className="text-3xl font-black dark:text-white tracking-tighter">Optimización <span className="text-primary italic">Asistida</span></h3>
+            <p className="text-stone-500 font-medium mt-2">Usa nuestra IA territorial para proyectar el impacto de tu estrategia.</p>
+          </div>
+          <AISimulator role={userRole} />
+        </section>
+      )}
 
       {/* How it works section */}
       <section className="bg-stone-100 dark:bg-earth-surface rounded-[4rem] p-12 md:p-20 flex flex-col lg:flex-row items-center gap-16">

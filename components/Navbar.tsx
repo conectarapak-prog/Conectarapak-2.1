@@ -32,33 +32,10 @@ const LogoIcon = () => (
   </svg>
 );
 
-export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, darkMode, toggleDarkMode, onSearchChange, user, onLogout }) => {
-  const getNavItems = () => {
-    const base = [
-      { id: 'home', label: 'Inicio' },
-      { id: 'dashboard', label: 'Panel' },
-      { id: 'discovery', label: 'Explorar' },
-      { id: 'contact', label: 'Contacto' }
-    ];
-
-    if (!user) return base;
-
-    switch (user.role) {
-      case 'entrepreneur':
-        return [...base, { id: 'analysis', label: 'Mis Proyectos' }, { id: 'education', label: 'Academia' }];
-      case 'investor_natural':
-      case 'investor_legal':
-        return [...base, { id: 'recommendations', label: 'Asesoría Inversión' }, { id: 'discovery', label: 'Portafolio' }];
-      case 'advisor':
-        return [...base, { id: 'admin', label: 'Moderación' }, { id: 'education', label: 'Mentorías' }];
-      default:
-        return base;
-    }
-  };
-
+export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, darkMode, toggleDarkMode, user, onLogout }) => {
   return (
     <header className="sticky top-0 z-50 bg-white/95 dark:bg-earth-card/95 backdrop-blur-md border-b border-stone-200 dark:border-stone-800 shadow-sm px-6 lg:px-10 py-3">
-      <div className="max-w-[1440px] auto flex items-center justify-between">
+      <div className="max-w-[1440px] mx-auto flex items-center justify-between">
         <div className="flex items-center gap-8">
           <div 
             className="flex items-center gap-3 cursor-pointer group" 
@@ -72,37 +49,13 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, darkMode, 
             </h1>
           </div>
           
-          <nav className="hidden md:flex items-center gap-6">
-            {getNavItems().map((v) => (
-              <button
-                key={v.id}
-                onClick={() => setView(v.id as View)}
-                className={`text-[10px] uppercase tracking-widest font-black transition-colors ${
-                  currentView === v.id ? 'text-primary' : 'text-stone-500 dark:text-stone-400 hover:text-primary'
-                }`}
-              >
-                {v.label}
-              </button>
-            ))}
-          </nav>
+          {/* Navegación eliminada para mayor limpieza estética (ahora centralizada en el Dashboard) */}
         </div>
 
         <div className="flex items-center gap-4">
-          {currentView === 'discovery' && (
-            <div className="hidden lg:flex items-center bg-stone-100 dark:bg-stone-800 rounded-full h-10 px-4 w-64 border border-transparent focus-within:border-primary/50 transition-all">
-              <span className="material-symbols-outlined text-stone-400 text-[20px]">search</span>
-              <input 
-                type="text" 
-                placeholder="Buscar proyectos..." 
-                onChange={(e) => onSearchChange(e.target.value)}
-                className="bg-transparent border-none focus:ring-0 text-sm w-full dark:text-white placeholder:text-stone-400"
-              />
-            </div>
-          )}
-
           <button 
             onClick={toggleDarkMode}
-            className="p-2 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-500 dark:text-stone-400"
+            className="p-2 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-500 dark:text-stone-400 transition-colors"
           >
             <span className="material-symbols-outlined">
               {darkMode ? 'light_mode' : 'dark_mode'}
@@ -125,7 +78,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, darkMode, 
           ) : (
             <button 
               onClick={() => setView('login')}
-              className="bg-primary text-white px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20"
+              className="bg-primary text-white px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary-hover transition-all"
             >
               Ingresar
             </button>

@@ -1,223 +1,193 @@
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 
-const createAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 /**
- * Genera un marco estratégico estructurado (VPC, Lean Canvas o PESTEL)
+ * Genera un Informe de Convergencia Total. 
+ * Se fuerza al modelo a no usar markdown excesivo en los títulos para evitar errores de renderizado.
  */
-export const generateStrategicFramework = async (frameworkType: string, projectContext: string) => {
-  const ai = createAI();
+export const generateFullConvergenceReport = async (projectContext: string) => {
+  const ai = getAI();
   try {
-    const prompt = `Actúa como un Consultor Senior de Estrategia y Economía Circular.
+    const prompt = `Actúa como un Consultor Senior de Estrategia Circular en Iquique.
     
-    HERRAMIENTA: ${frameworkType}
-    CONTEXTO DEL PROYECTO: "${projectContext}"
-    UBICACIÓN: Región de Tarapacá, Chile (Iquique, Alto Hospicio, Pozo Almonte).
+    CONTEXTO: "${projectContext}"
+    UBICACIÓN: Región de Tarapacá.
 
-    TAREA: Genera un informe estratégico profundo dividido en 4-5 secciones.
+    TAREA: Genera un INFORME ESTRATÉGICO UNIFICADO (VPC, Perfil, Lean, PESTEL).
     
-    REGLAS CRÍTICAS:
-    1. Para cada concepto técnico difícil (ej: "Propuesta de Valor", "Pains", "Revenue Streams", "Escalabilidad", "PESTEL"), incluye una breve aclaración pedagógica entre paréntesis.
-    2. Adapta los datos a la realidad local de Tarapacá: Menciona la ZOFRI, el Puerto, la Minería, el clima desértico o el borde costero según corresponda.
-    3. Estructura usando títulos con "### ".
-    4. Usa un tono que empodere al usuario pero que sea técnicamente riguroso.
-    5. No uses introducciones vacías, ve directo al análisis.`;
+    ESTRUCTURA TÉCNICA REQUERIDA:
+    ### 01. PROPUESTA DE VALOR Y CLIENTE (VPC)
+    ### 02. ESTRUCTURA DE NEGOCIO LEAN
+    ### 03. DIAGNÓSTICO PESTEL REGIONAL
+    ### 04. HOJA DE RUTA DE CONVERGENCIA
+
+    REGLAS ESTRICTAS DE FORMATO:
+    - NO uses negritas (**) en los títulos de sección (###).
+    - Incluye términos técnicos entre paréntesis para glosario dinámico.
+    - Integra datos de ZOFRI y el puerto de Iquique de forma natural.
+    - Sé directo, técnico y evita introducciones de cortesía.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3-pro-preview",
       contents: prompt,
-    });
-    
-    return response.text;
-  } catch (error) { 
-    return "Error al generar el marco estratégico. Por favor, intenta de nuevo."; 
-  }
-};
-
-/**
- * Analiza el impacto específico de un monto de inversión con un enfoque ultra-conciso.
- */
-export const analyzeInvestmentImpact = async (projectName: string, amount: number, percentage: number) => {
-  const ai = createAI();
-  try {
-    const prompt = `Actúa como un Analista de Riesgo ESG. 
-    Proyecto: "${projectName}" | Inyección: $${amount.toLocaleString()} CLP.
-    
-    Genera un INSIGHT ESTRATÉGICO en 3 bloques exactos:
-    1. [DESBLOQUEO TÉCNICO]: Qué hardware/software específico se adquiere (máx 15 palabras).
-    2. [KPI PROYECTADO]: El impacto numérico inmediato en sostenibilidad.
-    3. [DIVERSIFICACIÓN]: Un nodo regional complementario en Tarapacá.
-    
-    Usa un estilo minimalista, técnico y directo. Evita introducciones.`;
-
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
-    });
-    
-    return response.text;
-  } catch (error) { 
-    return "Análisis no disponible."; 
-  }
-};
-
-/**
- * Auditoría Profunda: Transforma el reporte en un conjunto de hitos técnicos.
- */
-export const deepAuditProject = async (projectData: any) => {
-  const ai = createAI();
-  try {
-    const prompt = `Realiza una AUDITORÍA TÉCNICA CRÍTICA para el proyecto: ${JSON.stringify(projectData)}.
-    
-    ESTRUCTURA OBLIGATORIA:
-    ### 01. VIABILIDAD TÉCNICA
-    Analiza la arquitectura del proyecto en 2 frases.
-    
-    ### 02. ANÁLISIS DE RIESGOS
-    Identifica el "Punto de Falla" más probable.
-    
-    ### 03. IMPACTO TARAPACÁ
-    Efecto directo en el PIB regional o empleabilidad local.
-    
-    Usa negritas para conceptos clave. Sé directo, casi telegráfico.`;
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
-      contents: prompt,
-      config: { thinkingConfig: { thinkingBudget: 16000 } }
-    });
-    return response.text;
-  } catch (error) { return "Error en auditoría."; }
-};
-
-export const getPostInsight = async (postTitle: string, postContent: string, userRole: string = 'entrepreneur') => {
-  const ai = createAI();
-  try {
-    const prompt = `Rol: ${userRole}. Analiza el post "${postTitle}". 
-    Proporciona un "Micro-Insight" de 2 párrafos: 
-    P1: Oportunidad de mercado para este rol. 
-    P2: Riesgo detectado.
-    Tono: Ejecutivo Senior.`;
-
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
-    });
-    return response.text;
-  } catch (error) { return "Insight no disponible."; }
-};
-
-export const researchEducationalAgent = async (topic: string) => {
-  const ai = createAI();
-  try {
-    const prompt = `Explica "${topic}" para Tarapacá. Formato: [DEFINICIÓN] [CASO DE USO] [IMPACTO LOCAL]`;
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
-      config: { tools: [{ googleSearch: {} }] },
-    });
-    return { text: response.text, sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks || [] };
-  } catch (error) { return { text: "Error.", sources: [] }; }
-};
-
-export const searchRegionalInsights = async (query: string) => {
-  const ai = createAI();
-  try {
-    const prompt = `Analiza "${query}" en Tarapacá. Resumen ejecutivo en 3 puntos: [DATA] [ESTRATEGIA] [RECOMENDACIÓN]`;
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
-      config: { tools: [{ googleSearch: {} }] },
-    });
-    return { text: response.text, sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks || [] };
-  } catch (error) { return { text: "Error.", sources: [] }; }
-};
-
-export const generateSpeech = async (text: string, voice: 'Kore' | 'Puck' | 'Zephyr' = 'Zephyr') => {
-  const ai = createAI();
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-preview-tts",
-      contents: [{ parts: [{ text: `Conciso y profesional: ${text}` }] }],
       config: {
-        responseModalities: [Modality.AUDIO],
-        speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
-      },
+        thinkingConfig: { thinkingBudget: 16000 }
+      }
     });
-    return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-  } catch (error) { return null; }
+    
+    return response.text;
+  } catch (error) { 
+    return "### ERROR DE SISTEMA\nNo se pudo sincronizar con los nodos de inteligencia. Por favor, intente nuevamente."; 
+  }
 };
 
-export const getChatbotResponse = async (userMessage: string, history: any[]) => {
-  const ai = createAI();
+export const generateStrategicFramework = async (frameworkType: string, projectContext: string) => {
+  const ai = getAI();
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: [...history.map(m => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] })), { role: 'user', parts: [{ text: userMessage }] }],
-    });
+    const prompt = `Genera un análisis técnico de ${frameworkType} para: ${projectContext} en Tarapacá. Usa títulos con ###.`;
+    const response = await ai.models.generateContent({ model: "gemini-3-flash-preview", contents: prompt });
     return response.text;
   } catch (error) { return "Error."; }
 };
 
-export const generateImagePro = async (prompt: string, size: any, ratio: any) => {
-  const ai = createAI();
+export const analyzeInvestmentImpact = async (projectName: string, amount: number, percentage: number) => {
+  const ai = getAI();
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-image-preview',
-      contents: { parts: [{ text: prompt }] },
-      config: { imageConfig: { imageSize: size, aspectRatio: ratio } }
-    });
-    for (const part of response.candidates?.[0].content.parts || []) {
-      if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
-    }
-    return null;
-  } catch (error) { return null; }
-};
-
-export const analyzeImageWithPro = async (base64Image: string, prompt: string) => {
-  const ai = createAI();
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
-      contents: { parts: [{ inlineData: { data: base64Image, mimeType: 'image/png' } }, { text: prompt }] },
-    });
+    const prompt = `Analiza inversión de $${amount} CLP en ${projectName}. Sé telegráfico.`;
+    const response = await ai.models.generateContent({ model: "gemini-3-flash-preview", contents: prompt });
     return response.text;
   } catch (error) { return "Error."; }
+};
+
+export const deepAuditProject = async (projectData: any) => {
+  const ai = getAI();
+  try {
+    const prompt = `Auditoría técnica: ${JSON.stringify(projectData)}`;
+    const response = await ai.models.generateContent({ model: 'gemini-3-pro-preview', contents: prompt });
+    return response.text;
+  } catch (error) { return "Error."; }
+};
+
+export const getPostInsight = async (title: string, content: string, role: string) => {
+  const ai = getAI();
+  const response = await ai.models.generateContent({ model: "gemini-3-flash-preview", contents: `Insight para ${role}: ${title}` });
+  return response.text;
+};
+
+export const getChatbotResponse = async (msg: string, history: any[]) => {
+  const ai = getAI();
+  const response = await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: msg });
+  return response.text;
 };
 
 export const generateProfileOptimization = async (role: string, data: any) => {
-  const ai = createAI();
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Optimiza perfil ${role}: ${JSON.stringify(data)}. 3 tips cortos.`,
-    });
-    return response.text;
-  } catch (error) { return "Error."; }
+  const ai = getAI();
+  const response = await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: `Optimiza ${role} con estos parámetros: ${JSON.stringify(data)}` });
+  return response.text;
 };
 
 export const getEducationalContent = async (topic: string) => {
-  const ai = createAI();
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Explica ${topic} en 100 palabras para el contexto de Iquique/Alto Hospicio.`,
-    });
-    return response.text;
-  } catch (error) { return null; }
+  const ai = getAI();
+  const response = await ai.models.generateContent({ model: "gemini-3-flash-preview", contents: `Explica el concepto de ${topic} en el contexto de economía circular.` });
+  return response.text;
 };
 
-export const getCircularEconomyAdvice = async (context: string) => {
-  const ai = createAI();
+// Fixed: implemented searchRegionalInsights with googleSearch tool and source extraction
+export const searchRegionalInsights = async (query: string) => {
+  const ai = getAI();
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Consejo circular para: ${context}. 2 líneas.`,
+    const response = await ai.models.generateContent({ 
+      model: "gemini-3-flash-preview", 
+      contents: query, 
+      config: { 
+        tools: [{ googleSearch: {} }],
+        systemInstruction: "Genera el análisis en el siguiente formato: [HECHOS]... [ESTRATEGIA]... [INFOGRAFIA]... [ACCIONES]..."
+      } 
     });
-    return response.text;
-  } catch (error) { return null; }
+    // Extract website URLs from groundingChunks as required by guidelines
+    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+    return { text: response.text, sources };
+  } catch (error) {
+    return { text: "Error en la búsqueda regional.", sources: [] };
+  }
 };
 
-export const analyzeProjectRisk = async (t: string, d: string) => "Riesgo analizado.";
-export const generateProjectSuggestions = async (p: any) => "Sugerencias listas.";
+// Fixed: implemented analyzeProjectRisk
+export const analyzeProjectRisk = async (title: string, description: string) => {
+  const ai = getAI();
+  try {
+    const prompt = `Analiza el riesgo del proyecto: ${title}. Descripción: ${description}`;
+    const response = await ai.models.generateContent({ model: "gemini-3-flash-preview", contents: prompt });
+    return response.text;
+  } catch (error) {
+    return "Error al analizar el riesgo.";
+  }
+};
+
+// Fixed: implemented generateProjectSuggestions
+export const generateProjectSuggestions = async (p: any) => {
+  const ai = getAI();
+  try {
+    const prompt = `Sugerencias para proyecto: ${JSON.stringify(p)}`;
+    const response = await ai.models.generateContent({ model: "gemini-3-flash-preview", contents: prompt });
+    return response.text;
+  } catch (error) {
+    return "Error al generar sugerencias.";
+  }
+};
+
+// Fixed: updated signature to accept prompt, imageSize and aspectRatio to fix error in AIPowerLab.tsx
+export const generateImagePro = async (prompt: string, imageSize: string = "1K", aspectRatio: string = "1:1") => {
+  const ai = getAI();
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-image-preview',
+      contents: {
+        parts: [{ text: prompt }],
+      },
+      config: {
+        imageConfig: {
+          aspectRatio: aspectRatio as any,
+          imageSize: imageSize as any,
+        }
+      },
+    });
+    // Iterate through candidates and parts to find the image part
+    for (const part of response.candidates?.[0]?.content?.parts || []) {
+      if (part.inlineData) {
+        return `data:image/png;base64,${part.inlineData.data}`;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
+
+// Fixed: implemented analyzeImageWithPro using flash model
+export const analyzeImageWithPro = async (base64Data: string, prompt: string) => {
+  const ai = getAI();
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: {
+        parts: [
+          {
+            inlineData: {
+              mimeType: 'image/jpeg',
+              data: base64Data,
+            },
+          },
+          { text: prompt },
+        ],
+      },
+    });
+    return response.text;
+  } catch (error) {
+    console.error(error);
+    return "Error en el análisis visual.";
+  }
+};

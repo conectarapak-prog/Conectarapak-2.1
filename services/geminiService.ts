@@ -3,119 +3,127 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 
 const createAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-// --- CREATIVE TOOLS ---
+/**
+ * Searches for regional insights using Google Search grounding.
+ * Extracts URLs from groundingChunks for transparency.
+ */
+export const searchRegionalInsights = async (query: string, projectContext?: string) => {
+  const ai = createAI();
+  try {
+    const prompt = projectContext 
+      ? `Actúa como un Consultor Senior en Estrategia Circular para Tarapacá.
+         ANALIZA: "${query}"
+         PROYECTO OBJETIVO: "${projectContext}"
 
-// Generación de Voz (TTS)
+         ESTRUCTURA OBLIGATORIA DE RESPUESTA:
+         [HECHOS]
+         (Lista de 3-4 puntos clave sobre la realidad territorial encontrada)
+         
+         [ESTRATEGIA]
+         (Análisis profundo de cómo esto potencia o impacta al proyecto mencionado)
+         
+         [ACCIONES]
+         (3 pasos concretos e inmediatos que el usuario debe tomar)`
+      : `Analiza de forma técnica y actual: "${query}" en el contexto de la Región de Tarapacá. Estructura con encabezados claros.`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: prompt,
+      config: { 
+        tools: [{ googleSearch: {} }],
+        temperature: 0.1 
+      },
+    });
+    
+    return {
+      text: response.text || "Sin resultados.",
+      sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks || []
+    };
+  } catch (error) { 
+    return { text: "Error en la conexión con el motor de inteligencia.", sources: [] }; 
+  }
+};
+
+/**
+ * Generates single-speaker audio from text using prebuilt voices.
+ */
 export const generateSpeech = async (text: string, voice: 'Kore' | 'Puck' | 'Zephyr' = 'Zephyr') => {
   const ai = createAI();
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
-      contents: [{ parts: [{ text: `Dile esto con entusiasmo y claridad: ${text}` }] }],
+      contents: [{ parts: [{ text: `Dile esto con entusiasmo: ${text}` }] }],
       config: {
         responseModalities: [Modality.AUDIO],
-        speechConfig: {
-          voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } },
-        },
+        speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
       },
     });
     return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-  } catch (error) {
-    console.error("TTS Error:", error);
-    return null;
-  }
+  } catch (error) { return null; }
 };
 
-// Edición de Imágenes (Nano Banana Flash Image)
-export const editImageWithIA = async (base64Image: string, prompt: string) => {
+/**
+ * Summarizes news items into punchy strategic insights.
+ */
+export const summarizeNews = async (title: string, excerpt: string) => {
   const ai = createAI();
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
-      contents: {
-        parts: [
-          { inlineData: { data: base64Image, mimeType: 'image/png' } },
-          { text: `Modifica esta imagen de producto circular siguiendo estrictamente: ${prompt}` },
-        ],
-      },
-      config: {
-        imageConfig: { aspectRatio: "16:9" }
-      }
+      model: "gemini-3-flash-preview",
+      contents: `Resume este insight estratégico en 2 frases potentes: ${title}. ${excerpt}`,
     });
-    for (const part of response.candidates?.[0].content.parts || []) {
-      if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
-    }
-    return null;
-  } catch (error) {
-    console.error("Image Edit Error:", error);
-    return null;
-  }
+    return response.text;
+  } catch (error) { return null; }
 };
 
-// --- ANALYSIS TOOLS ---
+/**
+ * Generates regional trends analysis for circular economy.
+ */
+export const generateRegionalTrends = async () => {
+  const ai = createAI();
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: "Analiza 3 tendencias actuales de economía circular en la zona norte de Chile.",
+    });
+    return response.text;
+  } catch (error) { return null; }
+};
 
-// Auditoría Profunda con Thinking (Gemini 3 Pro)
+/**
+ * Performs a deep technical audit using reasoning models.
+ */
 export const deepAuditProject = async (projectData: any) => {
   const ai = createAI();
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
-      contents: `Realiza una auditoría técnica profunda del siguiente proyecto circular para la Región de Tarapacá: ${JSON.stringify(projectData)}. Evalúa integridad circular, viabilidad económica y riesgos de greenwashing.`,
-      config: {
-        thinkingConfig: { thinkingBudget: 32768 },
-        systemInstruction: "Eres un auditor técnico de la ONU especializado en economía circular regenerativa. Sé crítico, preciso y constructivo."
-      }
+      contents: `Auditoría técnica de: ${JSON.stringify(projectData)}`,
+      config: { thinkingConfig: { thinkingBudget: 32768 } }
     });
     return response.text;
-  } catch (error) {
-    console.error("Deep Audit Error:", error);
-    return "Error en la auditoría profunda.";
-  }
+  } catch (error) { return "Error."; }
 };
 
-// Búsqueda en Google con Grounding
-export const searchRegionalInsights = async (query: string) => {
+/**
+ * Handles chatbot interactions with memory using Gemini 3 Pro.
+ */
+export const getChatbotResponse = async (userMessage: string, history: any[]) => {
   const ai = createAI();
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Busca información real y actual sobre este tema en Iquique y la Región de Tarapacá: ${query}`,
-      config: { tools: [{ googleSearch: {} }] },
-    });
-    return {
-      text: response.text,
-      sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks || []
-    };
-  } catch (error) { 
-    return null; 
-  }
-};
-
-// --- CHAT & REASONING ---
-
-export const getChatbotResponse = async (userMessage: string, history: { role: 'user' | 'ai', text: string }[]) => {
-  const ai = createAI();
-  const contents = history.map(msg => ({
-    role: msg.role === 'user' ? 'user' : 'model',
-    parts: [{ text: msg.text }]
-  }));
-  contents.push({ role: 'user', parts: [{ text: userMessage }] });
-  
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
-      contents: contents,
-      config: {
-        systemInstruction: "Eres el experto circular de Tarapacá. Usa razonamiento profundo para estrategias de impacto.",
-        thinkingConfig: { thinkingBudget: 16000 }
-      }
+      contents: [...history.map(m => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] })), { role: 'user', parts: [{ text: userMessage }] }],
+      config: { thinkingConfig: { thinkingBudget: 16000 } }
     });
     return response.text;
-  } catch (error) { return "Error de conexión."; }
+  } catch (error) { return "Error."; }
 };
 
-// Generación de Imagen Pro
-export const generateImagePro = async (prompt: string, size: "1K" | "2K" | "4K", ratio: "1:1" | "16:9" | "9:16") => {
+/**
+ * Generates AI images with standard 1K/16:9 config.
+ */
+export const generateImagePro = async (prompt: string, size: any, ratio: any) => {
   const ai = createAI();
   try {
     const response = await ai.models.generateContent({
@@ -130,72 +138,106 @@ export const generateImagePro = async (prompt: string, size: "1K" | "2K" | "4K",
   } catch (error) { return null; }
 };
 
-// Análisis de Imagen Pro
+/**
+ * Analyzes visual data using vision-capable Gemini models.
+ */
 export const analyzeImageWithPro = async (base64Image: string, prompt: string) => {
   const ai = createAI();
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
-      contents: {
-        parts: [
-          { inlineData: { data: base64Image, mimeType: 'image/png' } },
-          { text: prompt }
-        ]
-      },
-      config: {
-        thinkingConfig: { thinkingBudget: 8000 }
-      }
+      contents: { parts: [{ inlineData: { data: base64Image, mimeType: 'image/png' } }, { text: prompt }] },
+      config: { thinkingConfig: { thinkingBudget: 8000 } }
     });
     return response.text;
-  } catch (error) { return "Error analizando."; }
+  } catch (error) { return "Error."; }
 };
 
-export const decodeBase64Audio = (base64: string) => {
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes;
-};
+// --- FIXING MISSING EXPORTS ---
 
-// Otras exportaciones requeridas para compatibilidad
-export const estimateCarbonImpact = async (title: string, description: string) => {
-  const ai = createAI();
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Estima impacto CO2 para: ${title} - ${description}`,
-    });
-    return response.text;
-  } catch (error) { return "0kg CO2"; }
-};
-
+/**
+ * Analyzes project risk for administrative moderation.
+ * Fix for error in pages/AdminModeration.tsx
+ */
 export const analyzeProjectRisk = async (title: string, description: string) => {
   const ai = createAI();
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
-      contents: `Analiza riesgo para: ${title}`,
-      config: { thinkingConfig: { thinkingBudget: 4000 } }
+      contents: `Realiza un análisis de riesgo e integridad para el siguiente proyecto en la Región de Tarapacá:
+                 Título: ${title}
+                 Descripción: ${description}
+                 Busca indicios de greenwashing, inconsistencias técnicas o riesgos de fraude.`,
+      config: { thinkingConfig: { thinkingBudget: 8000 } }
     });
     return response.text;
-  } catch (error) { return "Riesgo no evaluado."; }
+  } catch (error) { return "Error al realizar el escaneo de riesgo."; }
 };
 
-export const generateProjectSuggestions = async (data: any) => {
+/**
+ * Generates project optimization suggestions for predictive analysis.
+ * Fix for error in pages/PredictiveAnalysis.tsx
+ */
+export const generateProjectSuggestions = async (data: { title: string, goal: number, duration: number }) => {
+  const ai = createAI();
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Optimiza los parámetros de esta campaña: 
+                 Proyecto: ${data.title}
+                 Meta: ${data.goal} USD
+                 Duración: ${data.duration} días.
+                 Sugiere mejoras basadas en datos de éxito de crowdfunding circular.`,
+    });
+    return response.text;
+  } catch (error) { return "No se pudieron generar sugerencias."; }
+};
+
+/**
+ * Provides strategic advice on circular economy topics.
+ * Fix for error in pages/Recommendations.tsx
+ */
+export const getCircularEconomyAdvice = async (query: string) => {
+  const ai = createAI();
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Brinda asesoría estratégica sobre economía circular aplicada a: ${query}`,
+    });
+    return response.text;
+  } catch (error) { return "Error al obtener asesoría estratégica."; }
+};
+
+/**
+ * Generates educational lessons about circular economy.
+ * Fix for error in pages/Education.tsx
+ */
+export const getEducationalContent = async (topic: string) => {
+  const ai = createAI();
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Explica detalladamente el concepto de "${topic}" en el marco de la economía circular para un público emprendedor.`,
+    });
+    return response.text;
+  } catch (error) { return "Error al recuperar contenido educativo."; }
+};
+
+/**
+ * Optimizes user profile parameters for AISimulator.
+ * Fix for error in components/AISimulator.tsx
+ */
+export const generateProfileOptimization = async (role: string, data: { val1: number, val2: number }) => {
   const ai = createAI();
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
-      contents: `Sugerencias para: ${JSON.stringify(data)}`,
+      contents: `Optimiza el perfil de un "${role}" con estos parámetros actuales: 
+                 Valor 1: ${data.val1}
+                 Valor 2: ${data.val2}
+                 Proporciona 3 recomendaciones accionables para maximizar el impacto regional.`,
+      config: { thinkingConfig: { thinkingBudget: 4000 } }
     });
     return response.text;
-  } catch (error) { return "Sin sugerencias."; }
+  } catch (error) { return "Error al generar optimización de perfil."; }
 };
-
-export const getCircularEconomyAdvice = async (p: any) => "Consejo circular...";
-export const getEducationalContent = async (p: any) => "Contenido educativo...";
-export const summarizeNews = async (t: string, e: string) => "Resumen...";
-export const generateRegionalTrends = async () => "Tendencias...";
-export const generateProfileOptimization = async (r: string, d: any) => "Optimización...";

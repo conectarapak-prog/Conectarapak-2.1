@@ -19,9 +19,19 @@
                             hover: '#437A28',
                             light: '#dce8d0',
                         },
-                        accent: {
+                        info: {
+                            DEFAULT: '#1E40AF',
+                            light: '#DBEAFE',
+                            dark: '#1E3A8A',
+                        },
+                        intel: {
                             DEFAULT: '#F59E0B',
-                            dark: '#D97706',
+                            light: '#FEF3C7',
+                            dark: '#B45309',
+                        },
+                        risk: {
+                            DEFAULT: '#DC2626',
+                            light: '#FEE2E2',
                         },
                         earth: {
                             light: '#FAF8F5',
@@ -41,10 +51,13 @@
     <style>
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+        
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+        .animate-fade-in { animation: fade-in 0.5s ease-out; }
     </style>
 <script type="importmap">
 {
@@ -58,7 +71,7 @@
 }
 </script>
 </head>
-<body class="bg-earth-light dark:bg-earth-dark text-slate-900 dark:text-stone-100 font-sans antialiased transition-colors duration-300">
+<body class="bg-earth-light dark:bg-earth-dark text-slate-900 dark:text-stone-100 font-sans antialiased transition-colors duration-300 overflow-x-hidden">
     <div id="root"></div>
 </body>
 </html>

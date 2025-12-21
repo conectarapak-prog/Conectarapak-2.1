@@ -35,9 +35,9 @@ const LogoIcon = () => (
 export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, darkMode, toggleDarkMode, user, onLogout }) => {
   const navLinks: { label: string, view: View }[] = [
     { label: 'Inicio', view: 'home' },
-    { label: 'Panel', view: 'dashboard' },
+    { label: 'Feed Comunitario', view: 'feed' },
     { label: 'Explorar', view: 'discovery' },
-    { label: 'Contacto', view: 'contact' },
+    { label: 'Panel', view: 'dashboard' },
   ];
 
   return (
@@ -46,7 +46,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, darkMode, 
         <div className="flex items-center gap-12">
           <div 
             className="flex items-center gap-3 cursor-pointer group" 
-            onClick={() => setView('dashboard')}
+            onClick={() => setView('home')}
           >
             <div className="group-hover:scale-110 transition-transform duration-300">
               <LogoIcon />

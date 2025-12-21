@@ -1,5 +1,5 @@
 
-export type View = 'home' | 'discovery' | 'detail' | 'analysis' | 'admin' | 'recommendations' | 'education' | 'edit' | 'login' | 'dashboard' | 'contact';
+export type View = 'home' | 'discovery' | 'detail' | 'analysis' | 'admin' | 'recommendations' | 'education' | 'edit' | 'login' | 'dashboard' | 'contact' | 'feed';
 
 export type UserRole = 'entrepreneur' | 'investor_natural' | 'investor_legal' | 'advisor' | 'none';
 
@@ -19,6 +19,10 @@ export interface NewsItem {
   date: string;
   excerpt: string;
   isAI?: boolean;
+  facts?: string;
+  interpretation?: string;
+  authorName?: string;
+  authorAvatar?: string;
 }
 
 export interface Project {

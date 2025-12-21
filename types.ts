@@ -7,6 +7,18 @@ export interface User {
   name: string;
   role: UserRole;
   avatar?: string;
+  identifier?: string;
+}
+
+export interface NewsItem {
+  id: number | string;
+  title: string;
+  category: string;
+  tag: string;
+  image: string;
+  date: string;
+  excerpt: string;
+  isAI?: boolean;
 }
 
 export interface Project {

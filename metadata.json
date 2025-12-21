@@ -1,5 +1,8 @@
 {
   "name": "CONECTARAPAK - Circular Ecosystem Platform",
   "description": "A comprehensive AI-powered crowdfunding platform for circular economy projects, featuring predictive analysis, discovery tools, and automated moderation.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
 }

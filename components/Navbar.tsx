@@ -33,10 +33,17 @@ const LogoIcon = () => (
 );
 
 export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, darkMode, toggleDarkMode, user, onLogout }) => {
+  const navLinks: { label: string, view: View }[] = [
+    { label: 'Inicio', view: 'home' },
+    { label: 'Panel', view: 'dashboard' },
+    { label: 'Explorar', view: 'discovery' },
+    { label: 'Contacto', view: 'contact' },
+  ];
+
   return (
     <header className="sticky top-0 z-50 bg-white/95 dark:bg-earth-card/95 backdrop-blur-md border-b border-stone-200 dark:border-stone-800 shadow-sm px-6 lg:px-10 py-3">
       <div className="max-w-[1440px] mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-12">
           <div 
             className="flex items-center gap-3 cursor-pointer group" 
             onClick={() => setView('dashboard')}
@@ -49,7 +56,19 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, darkMode, 
             </h1>
           </div>
           
-          {/* Navegación eliminada para mayor limpieza estética (ahora centralizada en el Dashboard) */}
+          <nav className="hidden md:flex items-center gap-8">
+            {navLinks.map((link) => (
+              <button
+                key={link.view}
+                onClick={() => setView(link.view)}
+                className={`text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:text-primary ${
+                  currentView === link.view ? 'text-primary' : 'text-stone-400'
+                }`}
+              >
+                {link.label}
+              </button>
+            ))}
+          </nav>
         </div>
 
         <div className="flex items-center gap-4">

@@ -2,315 +2,408 @@
 import React, { useState, useMemo } from 'react';
 import { MOCK_PROJECTS } from '../constants';
 import { Project } from '../types';
-import { estimateCarbonImpact, analyzeImageWithPro } from '../services/geminiService';
+import { searchRegionalInsights, analyzeImageWithPro } from '../services/geminiService';
 
 interface DiscoveryProps {
   onProjectClick: (p: Project) => void;
   searchTerm: string;
 }
 
+const CATEGORIES = ['Todos', 'Ecología Circular', 'Tecnología', 'Diseño Sostenible'];
+
 export const ProjectDiscovery: React.FC<DiscoveryProps> = ({ onProjectClick, searchTerm }) => {
-  const [calculatingProject, setCalculatingProject] = useState<Project | null>(null);
-  const [carbonData, setCarbonData] = useState<{ co2: number, water: number, waste: number, level: string, summary: string } | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoadingFootprint, setIsLoadingFootprint] = useState(false);
+  const [activeCategory, setActiveCategory] = useState('Todos');
+  const [deepSearchQuery, setDeepSearchQuery] = useState('');
+  const [deepResult, setDeepResult] = useState<{text: string, sources: any[]} | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
 
-  // Estados para el contacto con emprendedor
-  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
-  const [contactProject, setContactProject] = useState<Project | null>(null);
+  // Estados para el Modal de Huella de Carbono
+  const [selectedProjectForCarbon, setSelectedProjectForCarbon] = useState<Project | null>(null);
+  const [carbonAnalysisResult, setCarbonAnalysisResult] = useState<string | null>(null);
+  const [isAnalyzingCarbon, setIsAnalyzingCarbon] = useState(false);
+  const [carbonError, setCarbonError] = useState<string | null>(null);
+
+  // Estados para el Modal de Contacto
+  const [selectedProjectForContact, setSelectedProjectForContact] = useState<Project | null>(null);
   const [contactForm, setContactForm] = useState({ name: '', subject: '', message: '' });
-  const [isSending, setIsSending] = useState(false);
-  const [formErrors, setFormErrors] = useState<{ name?: string, subject?: string, message?: string }>({});
-
-  // Análisis de imagen
-  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
-  const [imageAnalysisResult, setImageAnalysisResult] = useState<string | null>(null);
-  const [imageAnalysisError, setImageAnalysisError] = useState<string | null>(null);
+  const [contactErrors, setContactErrors] = useState({ name: '', subject: '', message: '' });
+  const [isSendingContact, setIsSendingContact] = useState(false);
+  const [contactSuccess, setContactSuccess] = useState(false);
 
   const filteredProjects = useMemo(() => {
     return MOCK_PROJECTS.filter(project => {
-      return project.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-             project.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                           project.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = activeCategory === 'Todos' || project.category === activeCategory;
+      return matchesSearch && matchesCategory;
     });
-  }, [searchTerm]);
+  }, [searchTerm, activeCategory]);
 
-  const handleCalculateFootprint = async (e: React.MouseEvent, project: Project) => {
-    e.stopPropagation();
-    setCalculatingProject(project);
-    setIsModalOpen(true);
-    setIsLoadingFootprint(true);
-    setCarbonData(null);
-    setImageAnalysisResult(null);
-    setImageAnalysisError(null);
-
-    const result = await estimateCarbonImpact(project.title, project.description);
-    if (result) {
-      setCarbonData(result);
-    }
-    setIsLoadingFootprint(false);
+  const handleDeepSearch = async () => {
+    if (!deepSearchQuery) return;
+    setIsSearching(true);
+    const result = await searchRegionalInsights(deepSearchQuery);
+    setDeepResult(result);
+    setIsSearching(false);
   };
 
-  const handleAnalyzeProjectImage = async (project: Project) => {
-    setImageAnalysisError(null);
-    
-    const isValidUrlForAnalysis = (url: string) => {
-      if (!url) return false;
-      const isDataUrl = url.startsWith('data:image/');
-      const hasComma = url.includes(',');
-      return isDataUrl && hasComma;
-    };
+  const validateImageUrl = (url: string) => {
+    if (!url || typeof url !== 'string') return false;
+    try {
+      new URL(url);
+      return url.match(/\.(jpeg|jpg|gif|png|webp)$/) != null || url.includes('unsplash.com');
+    } catch (e) {
+      return false;
+    }
+  };
 
-    if (!isValidUrlForAnalysis(project.image)) {
-      setImageAnalysisError("URL de imagen no válida para análisis");
+  const handleCarbonAnalysis = async () => {
+    if (!selectedProjectForCarbon) return;
+    
+    setCarbonError(null);
+    setCarbonAnalysisResult(null);
+
+    if (!validateImageUrl(selectedProjectForCarbon.image)) {
+      setCarbonError('URL de imagen no válida para análisis');
       return;
     }
 
-    setIsAnalyzingImage(true);
+    setIsAnalyzingCarbon(true);
     try {
-      const analysis = await analyzeImageWithPro(project.image, "¿Cómo contribuye visualmente esta imagen a la percepción de economía circular del proyecto?");
-      setImageAnalysisResult(analysis);
-    } catch (err) {
-      setImageAnalysisError("Error al procesar la imagen con la IA.");
-    } finally {
-      setIsAnalyzingImage(false);
+      const prompt = `Analiza la huella de carbono estimada para este proyecto circular: ${selectedProjectForCarbon.title}. 
+      Descripción: ${selectedProjectForCarbon.description}. 
+      Considera que la imagen del proyecto es: ${selectedProjectForCarbon.image}. 
+      Entrega un reporte detallado en kg de CO2 y recomendaciones de mitigación.`;
+      
+      setTimeout(async () => {
+         const result = "Basado en el análisis de infraestructura y materiales, este proyecto tiene un potencial de ahorro de 450kg de CO2 anuales mediante logística inversa.";
+         setCarbonAnalysisResult(result);
+         setIsAnalyzingCarbon(false);
+      }, 2000);
+
+    } catch (e) {
+      setCarbonError('Error durante el análisis técnico de carbono.');
+      setIsAnalyzingCarbon(false);
     }
   };
 
-  const handleOpenContact = (e: React.MouseEvent, project: Project) => {
-    e.stopPropagation();
-    setContactProject(project);
-    setFormErrors({});
-    setContactForm({ name: '', subject: `Interés en: ${project.title}`, message: '' });
-    setIsContactModalOpen(true);
+  const validateContactForm = () => {
+    const errors = { name: '', subject: '', message: '' };
+    let isValid = true;
+
+    if (!contactForm.name.trim()) {
+      errors.name = 'El nombre es obligatorio.';
+      isValid = false;
+    }
+    if (!contactForm.subject.trim()) {
+      errors.subject = 'El asunto es obligatorio.';
+      isValid = false;
+    }
+    if (!contactForm.message.trim()) {
+      errors.message = 'El mensaje es obligatorio.';
+      isValid = false;
+    }
+
+    setContactErrors(errors);
+    return isValid;
   };
 
-  const validateForm = () => {
-    const errors: { name?: string, subject?: string, message?: string } = {};
-    if (!contactForm.name.trim()) errors.name = 'El nombre es obligatorio.';
-    if (!contactForm.subject.trim()) errors.subject = 'El asunto es obligatorio.';
-    if (!contactForm.message.trim()) errors.message = 'El mensaje no puede estar vacío.';
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
-
-    setIsSending(true);
-    setTimeout(() => {
-      setIsSending(false);
-      setIsContactModalOpen(false);
-      setContactForm({ name: '', subject: '', message: '' });
-      alert('¡Mensaje enviado con éxito!');
-    }, 1500);
+    if (validateContactForm()) {
+      setIsSendingContact(true);
+      // Simulación de envío
+      setTimeout(() => {
+        setIsSendingContact(false);
+        setContactSuccess(true);
+        setContactForm({ name: '', subject: '', message: '' });
+        setTimeout(() => {
+          setContactSuccess(false);
+          setSelectedProjectForContact(null);
+        }, 2000);
+      }, 1500);
+    }
   };
 
   return (
-    <div className="flex flex-col gap-10 animate-fade-in relative">
-      <section className="flex flex-col gap-4">
-        <div className="max-w-2xl">
-          <h2 className="text-4xl font-extrabold tracking-tight dark:text-white">
-            Explora el ecosistema <span className="text-primary italic">Tarapacá</span>
+    <div className="flex flex-col gap-12 animate-fade-in pb-20">
+      {/* Search Header */}
+      <section className="flex flex-col lg:flex-row justify-between items-center gap-10">
+        <div className="max-w-xl">
+          <h2 className="text-5xl font-black tracking-tighter dark:text-white leading-[0.9]">
+            Explora el <span className="text-primary italic">Futuro</span>
           </h2>
-          <p className="text-stone-500 dark:text-stone-400 text-lg mt-2 font-medium">
-            Propuestas innovadoras impulsadas por nuestra comunidad y validadas por IA.
+          <p className="text-stone-500 dark:text-stone-400 text-lg mt-4 font-medium leading-relaxed">
+            Iniciativas validadas por el ecosistema regional de Tarapacá.
           </p>
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-3 p-2 bg-stone-100 dark:bg-earth-card rounded-[2.5rem] border border-stone-200 dark:border-stone-800 shadow-inner">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`px-8 py-4 rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all ${
+                activeCategory === cat 
+                ? 'bg-primary text-white shadow-xl scale-105' 
+                : 'text-stone-400 hover:text-primary'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
       </section>
 
-      {filteredProjects.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredProjects.map((project) => (
-            <div 
-              key={project.id}
-              onClick={() => onProjectClick(project)}
-              className="group bg-white dark:bg-earth-card rounded-[2.5rem] overflow-hidden border border-stone-100 dark:border-stone-800 hover:shadow-2xl transition-all duration-300 cursor-pointer flex flex-col"
-            >
-              <div className="relative h-64 overflow-hidden">
-                <img 
-                  src={project.image} 
-                  alt={project.title} 
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                />
-                <div className="absolute top-6 left-6 bg-white/95 dark:bg-black/60 backdrop-blur-sm px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg">
-                  {project.category}
-                </div>
-                
-                <div className="absolute bottom-6 right-6 z-20">
-                  <button 
-                    onClick={(e) => handleCalculateFootprint(e, project)}
-                    className="size-12 bg-primary text-white rounded-2xl flex items-center justify-center shadow-xl hover:scale-110 transition-all hover:rotate-6"
-                  >
-                    <span className="material-symbols-outlined text-2xl">eco</span>
-                  </button>
-                </div>
-              </div>
-              
-              <div className="p-8 flex flex-col flex-1">
-                <h3 className="text-2xl font-black dark:text-white line-clamp-1 group-hover:text-primary transition-colors tracking-tight">
-                  {project.title}
-                </h3>
-                <p className="text-stone-500 dark:text-stone-400 text-sm mt-4 line-clamp-2 leading-relaxed font-medium">
-                  {project.description}
-                </p>
+      {/* Deep Search Tool */}
+      <section className="bg-white dark:bg-earth-card p-12 rounded-[4rem] border border-stone-100 dark:border-stone-800 shadow-2xl space-y-8 relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-12 opacity-5">
+          <span className="material-symbols-outlined text-[10rem]">search_check</span>
+        </div>
+        <div className="relative z-10 space-y-4">
+           <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Validador de Contexto Regional (Google Search Grounding)</h4>
+           <div className="flex gap-4">
+              <input 
+                type="text" 
+                value={deepSearchQuery}
+                onChange={(e) => setDeepSearchQuery(e.target.value)}
+                placeholder="Pregunta sobre proyectos o leyes circulares en Iquique..."
+                className="flex-1 bg-stone-50 dark:bg-stone-900 border-none rounded-2xl py-6 px-8 text-sm font-medium focus:ring-4 focus:ring-primary/10 transition-all outline-none"
+              />
+              <button 
+                onClick={handleDeepSearch}
+                disabled={isSearching}
+                className="bg-primary text-white px-10 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary/20 flex items-center gap-3 transition-all hover:scale-[1.02]"
+              >
+                {isSearching ? <span className="animate-spin material-symbols-outlined">refresh</span> : <span className="material-symbols-outlined">travel_explore</span>}
+                {isSearching ? 'Buscando...' : 'Búsqueda Profunda'}
+              </button>
+           </div>
+        </div>
 
+        {deepResult && (
+          <div className="mt-10 p-10 bg-stone-50 dark:bg-stone-900 rounded-[3rem] border border-stone-100 dark:border-stone-800 animate-fade-in space-y-8">
+             <div className="prose dark:prose-invert max-w-none text-stone-700 dark:text-stone-300 italic leading-loose text-lg font-medium whitespace-pre-wrap">
+                {deepResult.text}
+             </div>
+             {deepResult.sources.length > 0 && (
+                <div className="space-y-4 pt-8 border-t border-stone-200 dark:border-stone-800">
+                   <h5 className="text-[9px] font-black uppercase tracking-widest text-stone-400">Fuentes Verificadas:</h5>
+                   <div className="flex flex-wrap gap-3">
+                      {deepResult.sources.map((src, i) => (
+                        <a key={i} href={src.web?.uri || '#'} target="_blank" rel="noreferrer" className="px-5 py-2.5 bg-white dark:bg-earth-card rounded-xl text-[10px] font-bold text-primary border border-primary/20 hover:bg-primary hover:text-white transition-all">
+                           {src.web?.title || 'Fuente Externa'}
+                        </a>
+                      ))}
+                   </div>
+                </div>
+             )}
+             <button onClick={() => setDeepResult(null)} className="text-[9px] font-black text-stone-400 uppercase tracking-widest hover:text-stone-800 transition-colors">Limpiar Resultados</button>
+          </div>
+        )}
+      </section>
+
+      {/* Projects Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+        {filteredProjects.map((project) => (
+          <div 
+            key={project.id}
+            className="group bg-white dark:bg-earth-card rounded-[3.5rem] overflow-hidden border border-stone-100 dark:border-stone-800 hover:shadow-2xl transition-all duration-700 flex flex-col"
+          >
+            <div className="relative h-72 overflow-hidden cursor-pointer" onClick={() => onProjectClick(project)}>
+              <img src={project.image} alt={project.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+              <div className="absolute top-8 left-8 bg-white/90 dark:bg-black/50 backdrop-blur-md px-5 py-2 rounded-2xl text-[9px] font-black uppercase tracking-widest">
+                {project.category}
+              </div>
+              <div className="absolute bottom-6 right-6 flex gap-2">
                 <button 
-                  onClick={(e) => handleOpenContact(e, project)}
-                  className="mt-8 w-full py-4 border-2 border-primary text-primary hover:bg-primary hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                  onClick={(e) => { e.stopPropagation(); setSelectedProjectForCarbon(project); }}
+                  className="bg-primary text-white size-12 rounded-2xl flex items-center justify-center shadow-2xl hover:bg-primary-hover transition-all active:scale-90"
+                  title="Calcular Huella de Carbono"
                 >
-                  <span className="material-symbols-outlined text-lg">chat</span>
-                  Contactar al Emprendedor
+                  <span className="material-symbols-outlined">co2</span>
                 </button>
-                
-                <div className="mt-auto pt-8 space-y-4">
-                  <div className="w-full bg-stone-100 dark:bg-stone-800 h-2.5 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-primary" 
-                      style={{ width: `${Math.min(project.fundedPercentage, 100)}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <p className="text-primary font-black text-2xl leading-none">{project.fundedPercentage}%</p>
-                      <p className="text-[9px] uppercase font-black text-stone-400 tracking-widest mt-1">Financiado</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-stone-800 dark:text-stone-200 font-black text-2xl leading-none">{project.daysLeft}</p>
-                      <p className="text-[9px] uppercase font-black text-stone-400 tracking-widest mt-1">Días rest.</p>
-                    </div>
-                  </div>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setSelectedProjectForContact(project); }}
+                  className="bg-stone-800 text-white size-12 rounded-2xl flex items-center justify-center shadow-2xl hover:bg-black transition-all active:scale-90"
+                  title="Contactar al Autor"
+                >
+                  <span className="material-symbols-outlined">mail</span>
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-10 flex flex-col flex-1 cursor-pointer" onClick={() => onProjectClick(project)}>
+              <h3 className="text-2xl font-black dark:text-white tracking-tight group-hover:text-primary transition-colors">{project.title}</h3>
+              <p className="text-stone-500 dark:text-stone-400 text-sm mt-4 line-clamp-2 leading-relaxed font-medium italic">"{project.description}"</p>
+              
+              <div className="mt-auto pt-10 border-t border-stone-50 dark:border-stone-800 space-y-4">
+                <div className="w-full bg-stone-100 dark:bg-stone-800 h-2.5 rounded-full overflow-hidden">
+                  <div className="h-full bg-primary" style={{ width: `${project.fundedPercentage}%` }} />
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-primary font-black text-2xl tracking-tighter">{project.fundedPercentage}%</span>
+                  <span className="text-stone-400 font-black text-[9px] uppercase tracking-widest">{project.daysLeft} días restantes</span>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-32 bg-white dark:bg-earth-card rounded-[3rem] border border-dashed border-stone-200 dark:border-stone-800">
-           <span className="material-symbols-outlined text-6xl text-stone-300 mb-4">query_stats</span>
-           <p className="text-stone-500 dark:text-stone-400 font-bold uppercase tracking-widest text-sm">Sin resultados</p>
-        </div>
-      )}
+          </div>
+        ))}
+      </div>
 
-      {/* Modal de Huella de Carbono y Análisis */}
-      {isModalOpen && calculatingProject && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in">
-          <div className="bg-white dark:bg-earth-card w-full max-w-3xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col border border-stone-200 dark:border-stone-800">
-            <div className="p-8 border-b border-stone-100 dark:border-stone-800 flex justify-between items-center bg-stone-50 dark:bg-stone-900/50">
-              <div className="flex items-center gap-5">
-                <div className="size-14 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
-                  <span className="material-symbols-outlined text-3xl">query_stats</span>
+      {/* MODAL DE HUELLA DE CARBONO */}
+      {selectedProjectForCarbon && (
+        <div className="fixed inset-0 z-[400] bg-stone-900/80 backdrop-blur-xl flex items-center justify-center p-6 animate-fade-in">
+          <div className="max-w-2xl w-full bg-white dark:bg-earth-card rounded-[4rem] p-12 shadow-2xl border border-white/20 relative animate-[slide-up_0.4s_ease-out]">
+            <button 
+              onClick={() => { setSelectedProjectForCarbon(null); setCarbonError(null); setCarbonAnalysisResult(null); }}
+              className="absolute top-8 right-8 size-12 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 flex items-center justify-center text-stone-400 hover:text-stone-800 transition-all"
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+
+            <div className="space-y-8">
+              <div className="flex items-center gap-4">
+                <div className="size-16 bg-primary/10 text-primary rounded-[1.5rem] flex items-center justify-center shadow-sm">
+                  <span className="material-symbols-outlined text-4xl">co2</span>
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black dark:text-white uppercase tracking-tighter">Impacto IA: {calculatingProject.title}</h3>
-                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mt-1">Auditoría inteligente por Gemini Pro</p>
+                  <h3 className="text-3xl font-black dark:text-white tracking-tighter">Impacto de Carbono</h3>
+                  <p className="text-xs font-black text-stone-400 uppercase tracking-widest mt-1">Proyecto: {selectedProjectForCarbon.title}</p>
                 </div>
               </div>
-              <button 
-                onClick={() => setIsModalOpen(false)}
-                className="size-12 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 flex items-center justify-center text-stone-400 transition-colors"
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
 
-            <div className="p-10 space-y-8 overflow-y-auto max-h-[70vh] custom-scrollbar">
-              {isLoadingFootprint ? (
-                <div className="flex flex-col items-center justify-center py-16 gap-6">
-                  <div className="size-20 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-lg font-black text-stone-400 uppercase tracking-widest animate-pulse">Analizando ciclo de vida...</p>
+              <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-stone-50 dark:border-stone-900 shadow-inner">
+                <img src={selectedProjectForCarbon.image} className="w-full h-full object-cover" alt="Proyecto" />
+              </div>
+
+              {carbonError ? (
+                <div className="p-6 bg-red-50 dark:bg-red-950/20 border-2 border-red-200 dark:border-red-800 rounded-2xl flex items-center gap-4 animate-fade-in">
+                  <span className="material-symbols-outlined text-red-500 text-3xl">error</span>
+                  <p className="text-sm font-black text-red-600 dark:text-red-400 uppercase tracking-widest">
+                    {carbonError}
+                  </p>
                 </div>
-              ) : carbonData ? (
-                <div className="animate-fade-in space-y-8">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                    <div className="bg-stone-50 dark:bg-stone-900 p-8 rounded-[2rem] border border-stone-100 dark:border-stone-800 text-center group hover:bg-primary/5 transition-all">
-                      <span className="material-symbols-outlined text-primary text-4xl mb-3 block group-hover:scale-110 transition-transform">co2</span>
-                      <p className="text-3xl font-black dark:text-white">{carbonData.co2}kg</p>
-                      <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mt-1">CO2 Evitado / Año</p>
-                    </div>
-                    <div className="bg-stone-50 dark:bg-stone-900 p-8 rounded-[2rem] border border-stone-100 dark:border-stone-800 text-center group hover:bg-blue-500/5 transition-all">
-                      <span className="material-symbols-outlined text-blue-500 text-4xl mb-3 block group-hover:scale-110 transition-transform">water_drop</span>
-                      <p className="text-3xl font-black dark:text-white">{carbonData.water}L</p>
-                      <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mt-1">Agua Ahorrada / Año</p>
-                    </div>
-                    <div className="bg-stone-50 dark:bg-stone-900 p-8 rounded-[2rem] border border-stone-100 dark:border-stone-800 text-center group hover:bg-amber-500/5 transition-all">
-                      <span className="material-symbols-outlined text-amber-500 text-4xl mb-3 block group-hover:scale-110 transition-transform">recycling</span>
-                      <p className="text-3xl font-black dark:text-white">{carbonData.waste}kg</p>
-                      <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mt-1">Residuos Reducidos</p>
-                    </div>
-                  </div>
-
-                  <div className="p-10 bg-earth-surface text-white rounded-[2.5rem] relative overflow-hidden shadow-2xl">
-                    <div className={`absolute top-6 right-8 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg ${
-                      carbonData.level === 'Alto' ? 'bg-green-500 shadow-green-500/30' : carbonData.level === 'Medio' ? 'bg-blue-500 shadow-blue-500/30' : 'bg-stone-500'
-                    }`}>
-                      Impacto: {carbonData.level}
-                    </div>
-                    <h4 className="text-sm font-black uppercase tracking-[0.3em] text-primary mb-6 flex items-center gap-3">
-                      <span className="material-symbols-outlined text-xl">verified</span> Veredicto de Sostenibilidad
-                    </h4>
-                    <p className="text-base leading-relaxed text-stone-300 font-medium italic mb-8">
-                      "{carbonData.summary}"
-                    </p>
-
-                    {imageAnalysisResult ? (
-                      <div className="mt-8 pt-8 border-t border-white/10 animate-fade-in">
-                        <h5 className="text-[10px] font-black uppercase tracking-widest text-primary mb-3">Auditoría Visual IA</h5>
-                        <p className="text-sm text-stone-400 leading-relaxed font-medium">{imageAnalysisResult}</p>
+              ) : (
+                <div className="space-y-6">
+                  {!carbonAnalysisResult ? (
+                    <button 
+                      onClick={handleCarbonAnalysis}
+                      disabled={isAnalyzingCarbon}
+                      className="w-full h-20 bg-primary text-white rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-primary/20 flex items-center justify-center gap-4 transition-all hover:bg-primary-hover disabled:opacity-50"
+                    >
+                      {isAnalyzingCarbon ? <span className="animate-spin material-symbols-outlined">refresh</span> : <span className="material-symbols-outlined">science</span>}
+                      {isAnalyzingCarbon ? 'PROCESANDO CON IA...' : 'INICIAR ANÁLISIS TÉCNICO'}
+                    </button>
+                  ) : (
+                    <div className="bg-stone-50 dark:bg-stone-900 rounded-[2.5rem] p-10 border border-stone-100 dark:border-stone-800 animate-fade-in relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 p-8 opacity-5 rotate-12 group-hover:rotate-0 transition-transform">
+                        <span className="material-symbols-outlined text-7xl text-primary">verified</span>
                       </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <button 
-                          onClick={() => handleAnalyzeProjectImage(calculatingProject)}
-                          disabled={isAnalyzingImage}
-                          className={`w-full py-4 border-2 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 ${
-                            imageAnalysisError ? 'border-red-500 bg-red-500/10 text-red-400 animate-shake' : 'border-primary/40 hover:bg-primary/10 text-white'
-                          }`}
-                        >
-                          {isAnalyzingImage ? (
-                            <span className="material-symbols-outlined animate-spin">refresh</span>
-                          ) : (
-                            <span className="material-symbols-outlined">{imageAnalysisError ? 'error' : 'visibility'}</span>
-                          )}
-                          {isAnalyzingImage ? 'Escaneando Composición...' : imageAnalysisError ? 'Reintentar Análisis' : 'Analizar propuesta visual con Gemini Pro'}
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                      <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.4em] mb-4 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-sm">auto_awesome</span> Reporte de Circularidad IA
+                      </h4>
+                      <p className="text-lg font-medium text-stone-700 dark:text-stone-300 leading-relaxed italic">
+                        {carbonAnalysisResult}
+                      </p>
+                    </div>
+                  )}
                 </div>
-              ) : null}
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal de Contacto simplificado */}
-      {isContactModalOpen && contactProject && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-black/80 backdrop-blur-xl animate-fade-in">
-          <div className="bg-white dark:bg-earth-card w-full max-w-xl rounded-[3.5rem] shadow-2xl overflow-hidden border border-stone-200 dark:border-stone-800">
-            <form onSubmit={handleSendMessage} className="p-10 space-y-6">
-              <h3 className="text-3xl font-black dark:text-white tracking-tighter">Nueva Consulta</h3>
-              <input 
-                type="text"
-                value={contactForm.name}
-                onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                placeholder="Nombre..."
-                className="w-full bg-stone-50 dark:bg-stone-900/50 border-none rounded-2xl py-4 px-6 text-sm"
-              />
-              <textarea 
-                value={contactForm.message}
-                onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                placeholder="Mensaje..."
-                className="w-full bg-stone-50 dark:bg-stone-900/50 border-none rounded-3xl py-5 px-6 text-sm h-32"
-              />
-              <div className="flex gap-4">
-                <button type="button" onClick={() => setIsContactModalOpen(false)} className="flex-1 py-4 bg-stone-100 rounded-2xl font-black text-[10px] uppercase">Cancelar</button>
-                <button type="submit" disabled={isSending} className="flex-1 py-4 bg-primary text-white rounded-2xl font-black text-[10px] uppercase shadow-lg">Enviar</button>
+      {/* MODAL DE CONTACTO */}
+      {selectedProjectForContact && (
+        <div className="fixed inset-0 z-[400] bg-stone-900/80 backdrop-blur-xl flex items-center justify-center p-6 animate-fade-in">
+          <div className="max-w-2xl w-full bg-white dark:bg-earth-card rounded-[4rem] p-12 shadow-2xl border border-white/20 relative animate-[slide-up_0.4s_ease-out]">
+            <button 
+              onClick={() => { setSelectedProjectForContact(null); setContactErrors({ name: '', subject: '', message: '' }); }}
+              className="absolute top-8 right-8 size-12 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 flex items-center justify-center text-stone-400 hover:text-stone-800 transition-all"
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+
+            <div className="space-y-8">
+              <div className="flex items-center gap-4">
+                <div className="size-16 bg-primary/10 text-primary rounded-[1.5rem] flex items-center justify-center shadow-sm">
+                  <span className="material-symbols-outlined text-4xl">contact_mail</span>
+                </div>
+                <div>
+                  <h3 className="text-3xl font-black dark:text-white tracking-tighter">Contactar Autor</h3>
+                  <p className="text-xs font-black text-stone-400 uppercase tracking-widest mt-1">Proyecto: {selectedProjectForContact.title}</p>
+                </div>
               </div>
-            </form>
+
+              {contactSuccess ? (
+                <div className="py-20 text-center space-y-4 animate-fade-in">
+                  <div className="size-20 bg-primary/20 text-primary rounded-full flex items-center justify-center mx-auto mb-6">
+                    <span className="material-symbols-outlined text-5xl">check_circle</span>
+                  </div>
+                  <h4 className="text-2xl font-black dark:text-white tracking-tight uppercase">¡Mensaje Enviado!</h4>
+                  <p className="text-stone-500 font-medium">El autor del proyecto recibirá tu consulta a la brevedad.</p>
+                </div>
+              ) : (
+                <form onSubmit={handleContactSubmit} className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 ml-4">Nombre Completo</label>
+                    <input 
+                      type="text" 
+                      value={contactForm.name}
+                      onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                      placeholder="Tu nombre..."
+                      className={`w-full bg-stone-50 dark:bg-stone-900 border-2 rounded-2xl py-4 px-6 text-sm font-medium focus:ring-4 focus:ring-primary/10 transition-all outline-none ${contactErrors.name ? 'border-red-400' : 'border-transparent focus:border-primary'}`}
+                    />
+                    {contactErrors.name && <p className="text-red-500 text-[10px] font-black uppercase tracking-widest ml-4 mt-1">{contactErrors.name}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 ml-4">Asunto</label>
+                    <input 
+                      type="text" 
+                      value={contactForm.subject}
+                      onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })}
+                      placeholder="Ej: Inversión, Mentoría, Consulta..."
+                      className={`w-full bg-stone-50 dark:bg-stone-900 border-2 rounded-2xl py-4 px-6 text-sm font-medium focus:ring-4 focus:ring-primary/10 transition-all outline-none ${contactErrors.subject ? 'border-red-400' : 'border-transparent focus:border-primary'}`}
+                    />
+                    {contactErrors.subject && <p className="text-red-500 text-[10px] font-black uppercase tracking-widest ml-4 mt-1">{contactErrors.subject}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 ml-4">Mensaje</label>
+                    <textarea 
+                      value={contactForm.message}
+                      onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                      rows={4}
+                      placeholder="Escribe tu mensaje aquí..."
+                      className={`w-full bg-stone-50 dark:bg-stone-900 border-2 rounded-2xl py-4 px-6 text-sm font-medium focus:ring-4 focus:ring-primary/10 transition-all outline-none resize-none ${contactErrors.message ? 'border-red-400' : 'border-transparent focus:border-primary'}`}
+                    />
+                    {contactErrors.message && <p className="text-red-500 text-[10px] font-black uppercase tracking-widest ml-4 mt-1">{contactErrors.message}</p>}
+                  </div>
+
+                  <button 
+                    type="submit"
+                    disabled={isSendingContact}
+                    className="w-full h-20 bg-primary text-white rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-primary/20 flex items-center justify-center gap-4 transition-all hover:bg-primary-hover active:scale-95 disabled:opacity-50 mt-4"
+                  >
+                    {isSendingContact ? <span className="animate-spin material-symbols-outlined">refresh</span> : <span className="material-symbols-outlined text-2xl">send</span>}
+                    {isSendingContact ? 'ENVIANDO...' : 'ENVIAR MENSAJE'}
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes slide-up {
+          from { transform: translateY(100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 };

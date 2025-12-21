@@ -12,6 +12,8 @@ import { Recommendations } from './pages/Recommendations';
 import { Education } from './pages/Education';
 import { Contact } from './pages/Contact';
 import { CommunityFeed } from './pages/CommunityFeed';
+import { EditProfile } from './pages/EditProfile';
+import { SecuritySettings } from './pages/SecuritySettings';
 import { FloatingChatbot } from './components/FloatingChatbot';
 import { LiveAssistant } from './components/LiveAssistant';
 import { View, Project, User, NewsItem } from './types';
@@ -45,7 +47,12 @@ const App: React.FC = () => {
   };
 
   const handleLogin = (newUser: User) => {
-    setUser(newUser);
+    setUser({ ...newUser, isVerified: true });
+    setCurrentView('dashboard');
+  };
+
+  const handleUpdateUser = (updatedUser: User) => {
+    setUser(updatedUser);
     setCurrentView('dashboard');
   };
 
@@ -73,14 +80,16 @@ const App: React.FC = () => {
     
     switch (currentView) {
       case 'home': return <Home setView={setCurrentView} />;
-      case 'feed': return <CommunityFeed news={newsFeed} onPublish={publishInsight} />;
+      case 'feed': return <CommunityFeed news={newsFeed} onPublish={publishInsight} user={user} />;
       case 'dashboard': return <Dashboard setView={setCurrentView} userRole={user?.role} userName={user?.name} />;
-      case 'discovery': return <ProjectDiscovery onProjectClick={(p) => { setSelectedProject(p); setCurrentView('detail'); }} searchTerm={searchTerm} onPublish={publishInsight} />;
-      case 'detail': return selectedProject ? <ProjectDetail project={selectedProject} onPublish={publishInsight} /> : <ProjectDiscovery onProjectClick={(p) => { setSelectedProject(p); setCurrentView('detail'); }} searchTerm={searchTerm} onPublish={publishInsight} />;
+      case 'discovery': return <ProjectDiscovery setView={setCurrentView} onProjectClick={(p) => { setSelectedProject(p); setCurrentView('detail'); }} searchTerm={searchTerm} onPublish={publishInsight} />;
+      case 'detail': return selectedProject ? <ProjectDetail project={selectedProject} onPublish={publishInsight} /> : <ProjectDiscovery setView={setCurrentView} onProjectClick={(p) => { setSelectedProject(p); setCurrentView('detail'); }} searchTerm={searchTerm} onPublish={publishInsight} />;
       case 'admin': return <AdminModeration />;
       case 'analysis': return <AIPowerLab onPublish={publishInsight} />;
       case 'recommendations': return <Recommendations />;
       case 'education': return <Education />;
+      case 'edit': return user ? <EditProfile user={user} onUpdate={handleUpdateUser} onCancel={() => setCurrentView('dashboard')} /> : <Home setView={setCurrentView} />;
+      case 'settings': return <SecuritySettings onBack={() => setCurrentView('dashboard')} />;
       case 'contact': return <Contact setView={setCurrentView} />;
       default: return <Home setView={setCurrentView} />;
     }
@@ -90,7 +99,7 @@ const App: React.FC = () => {
     return (
       <div className="fixed inset-0 z-[1000] bg-earth-surface flex items-center justify-center p-6 text-white">
         <div className="absolute inset-0 bg-black/40 backdrop-blur-md"></div>
-        <div className="max-w-xl w-full bg-white dark:bg-earth-card p-12 rounded-[4rem] border border-stone-200 dark:border-stone-800 shadow-2xl relative z-10 text-center space-y-8">
+        <div className="max-w-xl w-full bg-white dark:bg-earth-card p-12 rounded-[3rem] border border-stone-200 dark:border-stone-800 shadow-2xl relative z-10 text-center space-y-8">
            <div className="size-20 bg-primary/20 rounded-3xl flex items-center justify-center mx-auto">
               <span className="material-symbols-outlined text-4xl text-primary">vpn_key</span>
            </div>
@@ -106,15 +115,15 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50 dark:bg-earth-dark transition-colors duration-300">
+    <div className="min-h-screen flex flex-col bg-stone-50/50 dark:bg-earth-dark transition-colors duration-300">
       <Navbar currentView={currentView} setView={setCurrentView} darkMode={darkMode} toggleDarkMode={() => setDarkMode(!darkMode)} onSearchChange={setSearchTerm} user={user} onLogout={() => { setUser(null); setCurrentView('home'); }} />
-      <main className="flex-1 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 py-10 md:py-20 flex flex-col items-center">
-        <div className="w-full max-w-6xl">
+      <main className="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-6 md:py-12 flex flex-col items-center">
+        <div className="w-full">
           {renderView()}
         </div>
       </main>
       {user && currentView !== 'login' && <><FloatingChatbot /><LiveAssistant /></>}
-      <footer className="bg-white dark:bg-earth-card border-t border-stone-100 dark:border-stone-800 py-12">
+      <footer className="bg-white dark:bg-earth-card border-t border-stone-100 dark:border-stone-800 py-10">
         <div className="max-w-7xl mx-auto px-10 flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentView('home')}><span className="font-extrabold text-xl dark:text-white tracking-tighter uppercase">CONECTARAPAK</span></div>
           <p className="text-stone-400 text-[10px] font-black uppercase tracking-widest">© 2024 CONECTARAPAK • Inteligencia Regional Sostenible</p>

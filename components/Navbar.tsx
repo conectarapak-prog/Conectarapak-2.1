@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { View, User } from '../types';
 
 interface NavbarProps {
@@ -33,9 +33,11 @@ const LogoIcon = () => (
 );
 
 export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, darkMode, toggleDarkMode, user, onLogout }) => {
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
   const navLinks: { label: string, view: View }[] = [
     { label: 'Inicio', view: 'home' },
-    { label: 'Feed Comunitario', view: 'feed' },
+    { label: 'Feed', view: 'feed' },
     { label: 'Explorar', view: 'discovery' },
     { label: 'Panel', view: 'dashboard' },
   ];
@@ -82,17 +84,43 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setView, darkMode, 
           </button>
 
           {user ? (
-            <div className="flex items-center gap-3 pl-4 border-l border-stone-200 dark:border-stone-800">
-              <div className="text-right hidden sm:block">
-                <p className="text-[10px] font-black dark:text-white leading-none uppercase">{user.name}</p>
-                <p className="text-[9px] text-primary font-bold uppercase tracking-tighter">{user.role.replace('_', ' ')}</p>
-              </div>
-              <div className="relative group cursor-pointer" onClick={onLogout}>
-                <img src={user.avatar} className="size-10 rounded-2xl border-2 border-primary/20 object-cover" alt="Profile" />
-                <div className="absolute inset-0 bg-red-500/80 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                   <span className="material-symbols-outlined text-white text-xl">logout</span>
+            <div className="relative">
+              <div 
+                className="flex items-center gap-3 pl-4 border-l border-stone-200 dark:border-stone-800 cursor-pointer group"
+                onClick={() => setShowUserMenu(!showUserMenu)}
+              >
+                <div className="text-right hidden sm:block">
+                  <p className="text-[10px] font-black dark:text-white leading-none uppercase">{user.name}</p>
+                  <p className="text-[9px] text-primary font-bold uppercase tracking-tighter">{user.role.replace('_', ' ')}</p>
                 </div>
+                <img src={user.avatar} className="size-10 rounded-2xl border-2 border-primary/20 object-cover group-hover:border-primary transition-colors" alt="Profile" />
               </div>
+
+              {showUserMenu && (
+                <>
+                  <div className="fixed inset-0 z-0" onClick={() => setShowUserMenu(false)}></div>
+                  <div className="absolute right-0 mt-4 w-48 bg-white dark:bg-stone-900 rounded-3xl border border-stone-100 dark:border-stone-800 shadow-2xl overflow-hidden z-10 animate-fade-in">
+                    <button 
+                      onClick={() => { setView('edit'); setShowUserMenu(false); }}
+                      className="w-full px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 flex items-center gap-3 border-b border-stone-50 dark:border-stone-800"
+                    >
+                      <span className="material-symbols-outlined text-sm">edit</span> Editar Perfil
+                    </button>
+                    <button 
+                      onClick={() => { setView('settings'); setShowUserMenu(false); }}
+                      className="w-full px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 flex items-center gap-3 border-b border-stone-50 dark:border-stone-800"
+                    >
+                      <span className="material-symbols-outlined text-sm">lock</span> Seguridad
+                    </button>
+                    <button 
+                      onClick={() => { onLogout(); setShowUserMenu(false); }}
+                      className="w-full px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-3"
+                    >
+                      <span className="material-symbols-outlined text-sm">logout</span> Salir
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           ) : (
             <button 

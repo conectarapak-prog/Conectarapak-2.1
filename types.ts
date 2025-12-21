@@ -1,13 +1,19 @@
 
-export type View = 'home' | 'discovery' | 'detail' | 'analysis' | 'admin' | 'recommendations' | 'education' | 'edit' | 'login' | 'dashboard' | 'contact' | 'feed';
+export type View = 'home' | 'discovery' | 'detail' | 'analysis' | 'admin' | 'recommendations' | 'education' | 'edit' | 'login' | 'dashboard' | 'contact' | 'feed' | 'settings';
 
 export type UserRole = 'entrepreneur' | 'investor_natural' | 'investor_legal' | 'advisor' | 'none';
+
+export type DocumentType = 'RUT' | 'DNI' | 'PASSPORT' | 'OTHER';
 
 export interface User {
   name: string;
   role: UserRole;
   avatar?: string;
-  identifier?: string;
+  identifier?: string; // Email
+  phone?: string;
+  documentId?: string;
+  documentType?: DocumentType;
+  isVerified?: boolean;
 }
 
 export interface NewsItem {

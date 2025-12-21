@@ -4,32 +4,20 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 const createAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 /**
- * Genera un insight educativo o estratégico profundo basado en el rol del usuario.
+ * Analiza el impacto específico de un monto de inversión con un enfoque ultra-conciso.
  */
-export const getPostInsight = async (postTitle: string, postContent: string, userRole: string = 'entrepreneur') => {
+export const analyzeInvestmentImpact = async (projectName: string, amount: number, percentage: number) => {
   const ai = createAI();
-  
-  const roleContexts: Record<string, string> = {
-    'entrepreneur': 'Enfócate en consejos técnicos para escalar el negocio, mejorar la sostenibilidad y formalización.',
-    'investor_natural': 'Enfócate en el impacto social, la transparencia del proyecto y el valor comunitario en Tarapacá.',
-    'investor_legal': 'Enfócate en el análisis de riesgo, cumplimiento de políticas públicas y retorno de impacto ESG.',
-    'advisor': 'Enfócate en identificar brechas de conocimiento y oportunidades para mentoría técnica o alianzas estratégicas.'
-  };
-
-  const context = roleContexts[userRole] || roleContexts['entrepreneur'];
-
   try {
-    const prompt = `Actúa como un Asesor Senior de CONECTARAPAK especializado en el perfil: ${userRole}. 
-    Analiza este post: "${postTitle}" - Contenido: "${postContent}"
+    const prompt = `Actúa como un Analista de Riesgo ESG. 
+    Proyecto: "${projectName}" | Inyección: $${amount.toLocaleString()} CLP.
     
-    ${context}
-
-    Genera un INSIGHT breve (3 párrafos cortos) con:
-    1. Análisis del hito desde la perspectiva del rol ${userRole}.
-    2. Cómo esto impulsa el desarrollo regional en Tarapacá.
-    3. Una acción o lección clave recomendada para este usuario específico.
+    Genera un INSIGHT ESTRATÉGICO en 3 bloques exactos:
+    1. [DESBLOQUEO TÉCNICO]: Qué hardware/software específico se adquiere (máx 15 palabras).
+    2. [KPI PROYECTADO]: El impacto numérico inmediato en sostenibilidad.
+    3. [DIVERSIFICACIÓN]: Un nodo regional complementario en Tarapacá.
     
-    Usa un tono profesional, técnico pero accesible.`;
+    Usa un estilo minimalista, técnico y directo. Evita introducciones.`;
 
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -38,36 +26,78 @@ export const getPostInsight = async (postTitle: string, postContent: string, use
     
     return response.text;
   } catch (error) { 
-    return "No se pudo generar el insight personalizado en este momento."; 
+    return "Análisis no disponible."; 
   }
 };
 
-export const researchEducationalAgent = async (topic: string) => {
+/**
+ * Auditoría Profunda: Transforma el reporte en un conjunto de hitos técnicos.
+ */
+export const deepAuditProject = async (projectData: any) => {
   const ai = createAI();
   try {
-    const prompt = `Actúa como un Agente de Inteligencia Educativa para la Región de Tarapacá.
-    INVESTIGA Y CONCATENA información real y actual sobre: "${topic}"
+    const prompt = `Realiza una AUDITORÍA TÉCNICA CRÍTICA para el proyecto: ${JSON.stringify(projectData)}.
     
-    DEBES RESPONDER SIGUIENDO ESTA ESTRUCTURA EXACTA:
-    [CONTEXTO] [LOGICA] [VISUAL] [IMPACTO]`;
+    ESTRUCTURA OBLIGATORIA:
+    ### 01. VIABILIDAD TÉCNICA
+    Analiza la arquitectura del proyecto en 2 frases.
+    
+    ### 02. ANÁLISIS DE RIESGOS
+    Identifica el "Punto de Falla" más probable.
+    
+    ### 03. IMPACTO TARAPACÁ
+    Efecto directo en el PIB regional o empleabilidad local.
+    
+    Usa negritas para conceptos clave. Sé directo, casi telegráfico.`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: prompt,
+      config: { thinkingConfig: { thinkingBudget: 16000 } }
+    });
+    return response.text;
+  } catch (error) { return "Error en auditoría."; }
+};
+
+export const getPostInsight = async (postTitle: string, postContent: string, userRole: string = 'entrepreneur') => {
+  const ai = createAI();
+  try {
+    const prompt = `Rol: ${userRole}. Analiza el post "${postTitle}". 
+    Proporciona un "Micro-Insight" de 2 párrafos: 
+    P1: Oportunidad de mercado para este rol. 
+    P2: Riesgo detectado.
+    Tono: Ejecutivo Senior.`;
 
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt,
-      config: { tools: [{ googleSearch: {} }], temperature: 0.1 },
+    });
+    return response.text;
+  } catch (error) { return "Insight no disponible."; }
+};
+
+// ... resto de funciones simplificadas para mantener consistencia
+export const researchEducationalAgent = async (topic: string) => {
+  const ai = createAI();
+  try {
+    const prompt = `Explica "${topic}" para Tarapacá. Formato: [DEFINICIÓN] [CASO DE USO] [IMPACTO LOCAL]`;
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: prompt,
+      config: { tools: [{ googleSearch: {} }] },
     });
     return { text: response.text, sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks || [] };
   } catch (error) { return { text: "Error.", sources: [] }; }
 };
 
-export const searchRegionalInsights = async (query: string, projectContext?: string) => {
+export const searchRegionalInsights = async (query: string) => {
   const ai = createAI();
   try {
-    const prompt = `Analiza: "${query}" en el contexto de Tarapacá. Estructura: [HECHOS] [ESTRATEGIA] [INFOGRAFIA] [ACCIONES]`;
+    const prompt = `Analiza "${query}" en Tarapacá. Resumen ejecutivo en 3 puntos: [DATA] [ESTRATEGIA] [RECOMENDACIÓN]`;
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt,
-      config: { tools: [{ googleSearch: {} }], temperature: 0.1 },
+      config: { tools: [{ googleSearch: {} }] },
     });
     return { text: response.text, sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks || [] };
   } catch (error) { return { text: "Error.", sources: [] }; }
@@ -78,7 +108,7 @@ export const generateSpeech = async (text: string, voice: 'Kore' | 'Puck' | 'Zep
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
-      contents: [{ parts: [{ text: `Dile esto con entusiasmo: ${text}` }] }],
+      contents: [{ parts: [{ text: `Conciso y profesional: ${text}` }] }],
       config: {
         responseModalities: [Modality.AUDIO],
         speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
@@ -88,36 +118,12 @@ export const generateSpeech = async (text: string, voice: 'Kore' | 'Puck' | 'Zep
   } catch (error) { return null; }
 };
 
-export const summarizeNews = async (title: string, excerpt: string) => {
-  const ai = createAI();
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Resume: ${title}. ${excerpt}`,
-    });
-    return response.text;
-  } catch (error) { return null; }
-};
-
-export const deepAuditProject = async (projectData: any) => {
-  const ai = createAI();
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
-      contents: `Auditoría técnica de: ${JSON.stringify(projectData)}`,
-      config: { thinkingConfig: { thinkingBudget: 32768 } }
-    });
-    return response.text;
-  } catch (error) { return "Error."; }
-};
-
 export const getChatbotResponse = async (userMessage: string, history: any[]) => {
   const ai = createAI();
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-3-flash-preview',
       contents: [...history.map(m => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] })), { role: 'user', parts: [{ text: userMessage }] }],
-      config: { thinkingConfig: { thinkingBudget: 16000 } }
     });
     return response.text;
   } catch (error) { return "Error."; }
@@ -144,52 +150,43 @@ export const analyzeImageWithPro = async (base64Image: string, prompt: string) =
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: { parts: [{ inlineData: { data: base64Image, mimeType: 'image/png' } }, { text: prompt }] },
-      config: { thinkingConfig: { thinkingBudget: 8000 } }
     });
     return response.text;
   } catch (error) { return "Error."; }
 };
 
-export const analyzeProjectRisk = async (t: string, d: string) => "Análisis de riesgo moderado.";
-export const generateProjectSuggestions = async (p: any) => "Sugerencias de optimización.";
 export const generateProfileOptimization = async (role: string, data: any) => {
   const ai = createAI();
   try {
-    const prompt = `Genera un reporte de optimización IA para un usuario de tipo ${role} que tiene los parámetros: ${JSON.stringify(data)}. 
-    Enfócate en cómo mejorar su eficiencia en el ecosistema circular de Tarapacá.`;
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: prompt,
+      contents: `Optimiza perfil ${role}: ${JSON.stringify(data)}. 3 tips cortos.`,
     });
     return response.text;
-  } catch (error) { return "Error al generar optimización."; }
+  } catch (error) { return "Error."; }
 };
 
-// Fix: Add missing getEducationalContent export used in Education.tsx
 export const getEducationalContent = async (topic: string) => {
   const ai = createAI();
   try {
-    const prompt = `Actúa como un experto en educación sobre economía circular. 
-    Explica en detalle el concepto de: "${topic}". 
-    Resalta los puntos clave en negrita y proporciona ejemplos relevantes para la Región de Tarapacá, Chile.`;
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: prompt,
+      contents: `Explica ${topic} en 100 palabras para el contexto de Iquique/Alto Hospicio.`,
     });
     return response.text;
   } catch (error) { return null; }
 };
 
-// Fix: Add missing getCircularEconomyAdvice export used in Recommendations.tsx
 export const getCircularEconomyAdvice = async (context: string) => {
   const ai = createAI();
   try {
-    const prompt = `Como consultor experto en sostenibilidad, analiza el siguiente contexto y ofrece consejos estratégicos de economía circular: "${context}". 
-    Enfócate en la realidad económica y social de Tarapacá.`;
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: prompt,
+      contents: `Consejo circular para: ${context}. 2 líneas.`,
     });
     return response.text;
   } catch (error) { return null; }
 };
+
+export const analyzeProjectRisk = async (t: string, d: string) => "Riesgo analizado.";
+export const generateProjectSuggestions = async (p: any) => "Sugerencias listas.";

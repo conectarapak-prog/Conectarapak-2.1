@@ -21,6 +21,7 @@ import { MOCK_NEWS } from './constants';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('home');
+  const [viewHistory, setViewHistory] = useState<View[]>(['home']);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [darkMode, setDarkMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -46,14 +47,29 @@ const App: React.FC = () => {
     setHasApiKey(true);
   };
 
+  const navigateTo = (view: View) => {
+    if (view !== currentView) {
+      setViewHistory(prev => [...prev, currentView]);
+      setCurrentView(view);
+    }
+  };
+
+  const goBack = () => {
+    if (viewHistory.length > 0) {
+      const prev = viewHistory[viewHistory.length - 1];
+      setViewHistory(prev => prev.slice(0, -1));
+      setCurrentView(prev);
+    }
+  };
+
   const handleLogin = (newUser: User) => {
     setUser({ ...newUser, isVerified: true });
-    setCurrentView('dashboard');
+    navigateTo('dashboard');
   };
 
   const handleUpdateUser = (updatedUser: User) => {
     setUser(updatedUser);
-    setCurrentView('dashboard');
+    navigateTo('dashboard');
   };
 
   const publishInsight = (insight: Partial<NewsItem>) => {
@@ -72,26 +88,26 @@ const App: React.FC = () => {
       isAI: true
     };
     setNewsFeed(prev => [newItem, ...prev]);
-    setCurrentView('feed');
+    navigateTo('feed');
   };
 
   const renderView = () => {
     if (currentView === 'login') return <Login onLogin={handleLogin} />;
     
     switch (currentView) {
-      case 'home': return <Home setView={setCurrentView} />;
+      case 'home': return <Home setView={navigateTo} />;
       case 'feed': return <CommunityFeed news={newsFeed} onPublish={publishInsight} user={user} />;
-      case 'dashboard': return <Dashboard setView={setCurrentView} userRole={user?.role} userName={user?.name} />;
-      case 'discovery': return <ProjectDiscovery setView={setCurrentView} onProjectClick={(p) => { setSelectedProject(p); setCurrentView('detail'); }} searchTerm={searchTerm} onPublish={publishInsight} />;
-      case 'detail': return selectedProject ? <ProjectDetail project={selectedProject} onPublish={publishInsight} /> : <ProjectDiscovery setView={setCurrentView} onProjectClick={(p) => { setSelectedProject(p); setCurrentView('detail'); }} searchTerm={searchTerm} onPublish={publishInsight} />;
+      case 'dashboard': return <Dashboard setView={navigateTo} userRole={user?.role} userName={user?.name} />;
+      case 'discovery': return <ProjectDiscovery setView={navigateTo} onProjectClick={(p) => { setSelectedProject(p); navigateTo('detail'); }} searchTerm={searchTerm} onPublish={publishInsight} />;
+      case 'detail': return selectedProject ? <ProjectDetail project={selectedProject} onPublish={publishInsight} /> : <ProjectDiscovery setView={navigateTo} onProjectClick={(p) => { setSelectedProject(p); navigateTo('detail'); }} searchTerm={searchTerm} onPublish={publishInsight} />;
       case 'admin': return <AdminModeration />;
       case 'analysis': return <AIPowerLab onPublish={publishInsight} />;
       case 'recommendations': return <Recommendations />;
       case 'education': return <Education />;
-      case 'edit': return user ? <EditProfile user={user} onUpdate={handleUpdateUser} onCancel={() => setCurrentView('dashboard')} /> : <Home setView={setCurrentView} />;
-      case 'settings': return <SecuritySettings onBack={() => setCurrentView('dashboard')} />;
-      case 'contact': return <Contact setView={setCurrentView} />;
-      default: return <Home setView={setCurrentView} />;
+      case 'edit': return user ? <EditProfile user={user} onUpdate={handleUpdateUser} onCancel={goBack} /> : <Home setView={navigateTo} />;
+      case 'settings': return <SecuritySettings onBack={goBack} />;
+      case 'contact': return <Contact setView={navigateTo} />;
+      default: return <Home setView={navigateTo} />;
     }
   };
 
@@ -116,16 +132,35 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-stone-50/50 dark:bg-earth-dark transition-colors duration-300">
-      <Navbar currentView={currentView} setView={setCurrentView} darkMode={darkMode} toggleDarkMode={() => setDarkMode(!darkMode)} onSearchChange={setSearchTerm} user={user} onLogout={() => { setUser(null); setCurrentView('home'); }} />
-      <main className="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-6 md:py-12 flex flex-col items-center">
+      <Navbar currentView={currentView} setView={navigateTo} darkMode={darkMode} toggleDarkMode={() => setDarkMode(!darkMode)} onSearchChange={setSearchTerm} user={user} onLogout={() => { setUser(null); setCurrentView('home'); }} />
+      
+      <main className="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-6 md:py-12 flex flex-col items-center relative">
+        
+        {/* BACK PROTOCOL ICON - Posicionado estratégicamente */}
+        {currentView !== 'home' && currentView !== 'login' && (
+          <div className="absolute top-0 left-4 md:left-8 lg:left-12 z-40 animate-fade-in">
+            <button 
+              onClick={goBack}
+              className="group flex items-center gap-3 bg-white/60 dark:bg-earth-card/60 backdrop-blur-md border border-stone-200/50 dark:border-stone-800/50 px-4 py-2 rounded-2xl shadow-sm hover:shadow-xl hover:border-primary/30 transition-all duration-500"
+            >
+              <div className="size-8 rounded-xl bg-white dark:bg-stone-900 flex items-center justify-center text-stone-400 group-hover:text-primary transition-colors">
+                <span className="material-symbols-outlined text-xl group-hover:-translate-x-1 transition-transform">arrow_back</span>
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 group-hover:text-primary hidden md:block">Retroceder</span>
+            </button>
+          </div>
+        )}
+
         <div className="w-full">
           {renderView()}
         </div>
       </main>
+      
       {user && currentView !== 'login' && <><FloatingChatbot /><LiveAssistant /></>}
+      
       <footer className="bg-white dark:bg-earth-card border-t border-stone-100 dark:border-stone-800 py-10">
         <div className="max-w-7xl mx-auto px-10 flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentView('home')}><span className="font-extrabold text-xl dark:text-white tracking-tighter uppercase">CONECTARAPAK</span></div>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigateTo('home')}><span className="font-extrabold text-xl dark:text-white tracking-tighter uppercase">CONECTARAPAK</span></div>
           <p className="text-stone-400 text-[10px] font-black uppercase tracking-widest">© 2024 CONECTARAPAK • Inteligencia Regional Sostenible</p>
         </div>
       </footer>

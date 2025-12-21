@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { AISimulator } from '../components/AISimulator';
+import { InvestmentSimulator } from '../components/InvestmentSimulator';
 import { UserRole, View } from '../types';
 
 interface DashboardProps {
@@ -10,6 +11,8 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ setView, userRole, userName }) => {
+  const isInvestor = userRole === 'investor_natural' || userRole === 'investor_legal';
+
   const getToolsByRole = (role: UserRole | undefined) => {
     const baseTools = [
       { name: 'Red de Impacto', icon: 'hub', atmosphere: 'primary', action: () => setView('discovery'), desc: 'Explora nodos y conexiones regionales.' }
@@ -126,13 +129,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ setView, userRole, userNam
         ))}
       </section>
 
-      {/* Simulador Adaptativo */}
+      {/* Simulador Adaptativo / Participación Inversor */}
       <section className="bg-stone-50/50 dark:bg-stone-900/10 p-10 rounded-[3.5rem] border border-stone-100 dark:border-stone-800">
         <div className="flex items-center gap-3 mb-10">
            <div className={`size-2.5 rounded-full animate-pulse ${stats.color.replace('text-', 'bg-')}`}></div>
-           <h3 className={`text-[9px] font-black uppercase tracking-[0.6em] ${stats.color}`}>Proyección Predictiva Gemini Pro</h3>
+           <h3 className={`text-[9px] font-black uppercase tracking-[0.6em] ${stats.color}`}>
+             {isInvestor ? 'Participación Estratégica Inversor' : 'Proyección Predictiva Gemini Pro'}
+           </h3>
         </div>
-        <AISimulator role={userRole || 'entrepreneur'} />
+        
+        {isInvestor ? (
+          <InvestmentSimulator />
+        ) : (
+          <AISimulator role={userRole || 'entrepreneur'} />
+        )}
       </section>
 
     </div>

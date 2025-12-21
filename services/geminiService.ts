@@ -4,6 +4,38 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 const createAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 /**
+ * Genera un marco estratégico estructurado (VPC, Lean Canvas o PESTEL)
+ */
+export const generateStrategicFramework = async (frameworkType: string, projectContext: string) => {
+  const ai = createAI();
+  try {
+    const prompt = `Actúa como un Consultor Senior de Estrategia y Economía Circular.
+    
+    HERRAMIENTA: ${frameworkType}
+    CONTEXTO DEL PROYECTO: "${projectContext}"
+    UBICACIÓN: Región de Tarapacá, Chile (Iquique, Alto Hospicio, Pozo Almonte).
+
+    TAREA: Genera un informe estratégico profundo dividido en 4-5 secciones.
+    
+    REGLAS CRÍTICAS:
+    1. Para cada concepto técnico difícil (ej: "Propuesta de Valor", "Pains", "Revenue Streams", "Escalabilidad", "PESTEL"), incluye una breve aclaración pedagógica entre paréntesis.
+    2. Adapta los datos a la realidad local de Tarapacá: Menciona la ZOFRI, el Puerto, la Minería, el clima desértico o el borde costero según corresponda.
+    3. Estructura usando títulos con "### ".
+    4. Usa un tono que empodere al usuario pero que sea técnicamente riguroso.
+    5. No uses introducciones vacías, ve directo al análisis.`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: prompt,
+    });
+    
+    return response.text;
+  } catch (error) { 
+    return "Error al generar el marco estratégico. Por favor, intenta de nuevo."; 
+  }
+};
+
+/**
  * Analiza el impacto específico de un monto de inversión con un enfoque ultra-conciso.
  */
 export const analyzeInvestmentImpact = async (projectName: string, amount: number, percentage: number) => {
@@ -76,7 +108,6 @@ export const getPostInsight = async (postTitle: string, postContent: string, use
   } catch (error) { return "Insight no disponible."; }
 };
 
-// ... resto de funciones simplificadas para mantener consistencia
 export const researchEducationalAgent = async (topic: string) => {
   const ai = createAI();
   try {

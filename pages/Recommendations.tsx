@@ -147,6 +147,8 @@ export const Recommendations: React.FC = () => {
     localStorage.setItem('hub_saved_reports', JSON.stringify(updated));
   };
 
+  const isExploringFiles = activeTab === 'investigacion' || activeTab === 'reportes';
+
   return (
     <div className="max-w-[1440px] mx-auto py-10 px-4 md:px-10 animate-fade-in min-h-screen flex flex-col gap-10 relative">
       
@@ -193,54 +195,56 @@ export const Recommendations: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* PANEL IZQUIERDO: INPUT */}
-        <div className="lg:col-span-4 lg:sticky lg:top-24 flex flex-col gap-8">
-           <div className="bg-white dark:bg-stone-900 p-8 rounded-[3.5rem] border border-stone-100 dark:border-stone-800 shadow-sm space-y-8">
-              <div className="space-y-4">
-                 <label className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-400 ml-4">Contexto de Proyecto</label>
-                 <textarea 
-                    value={context}
-                    onChange={(e) => setContext(e.target.value)}
-                    placeholder="Describe tu idea para Iquique o Tarapacá para generar el Informe de Convergencia..."
-                    className="w-full h-40 bg-stone-50/50 dark:bg-stone-950/50 border-none rounded-[2rem] p-8 text-sm font-medium italic dark:text-white outline-none focus:ring-2 focus:ring-primary transition-all resize-none shadow-inner"
-                 />
-              </div>
+        {/* PANEL IZQUIERDO: INPUT - Solo se muestra en la pestaña de Estrategia */}
+        {!isExploringFiles && (
+          <div className="lg:col-span-4 lg:sticky lg:top-24 flex flex-col gap-8 animate-fade-in">
+             <div className="bg-white dark:bg-stone-900 p-8 rounded-[3.5rem] border border-stone-100 dark:border-stone-800 shadow-sm space-y-8">
+                <div className="space-y-4">
+                   <label className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-400 ml-4">Contexto de Proyecto</label>
+                   <textarea 
+                      value={context}
+                      onChange={(e) => setContext(e.target.value)}
+                      placeholder="Describe tu idea para Iquique o Tarapacá para generar el Informe de Convergencia..."
+                      className="w-full h-40 bg-stone-50/50 dark:bg-stone-950/50 border-none rounded-[2rem] p-8 text-sm font-medium italic dark:text-white outline-none focus:ring-2 focus:ring-primary transition-all resize-none shadow-inner"
+                   />
+                </div>
 
-              <div className="flex justify-center gap-6 opacity-30">
-                 {['stars', 'person_search', 'grid_view', 'public'].map(icon => (
-                   <span key={icon} className="material-symbols-outlined">{icon}</span>
-                 ))}
-              </div>
+                <div className="flex justify-center gap-6 opacity-30">
+                   {['stars', 'person_search', 'grid_view', 'public'].map(icon => (
+                     <span key={icon} className="material-symbols-outlined">{icon}</span>
+                   ))}
+                </div>
 
-              <button 
-                onClick={handleFullProcess}
-                disabled={loading || !context.trim()}
-                className="group w-full h-20 bg-stone-900 dark:bg-white dark:text-stone-900 text-white rounded-[2.5rem] font-black text-xs uppercase tracking-[0.4em] shadow-2xl hover:bg-primary hover:text-white active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-30"
-              >
-                {loading ? <span className="animate-spin material-symbols-outlined text-2xl">refresh</span> : <span className="material-symbols-outlined text-2xl">bolt</span>}
-                {loading ? 'Sincronizando...' : 'EJECUTAR CONVERGENCIA'}
-              </button>
-           </div>
+                <button 
+                  onClick={handleFullProcess}
+                  disabled={loading || !context.trim()}
+                  className="group w-full h-20 bg-stone-900 dark:bg-white dark:text-stone-900 text-white rounded-[2.5rem] font-black text-xs uppercase tracking-[0.4em] shadow-2xl hover:bg-primary hover:text-white active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-30"
+                >
+                  {loading ? <span className="animate-spin material-symbols-outlined text-2xl">refresh</span> : <span className="material-symbols-outlined text-2xl">bolt</span>}
+                  {loading ? 'Sincronizando...' : 'EJECUTAR CONVERGENCIA'}
+                </button>
+             </div>
 
-           <div className="bg-primary/5 p-8 rounded-[2.5rem] border border-primary/10 flex items-center gap-6">
-              <div className="size-14 bg-white dark:bg-stone-800 rounded-2xl flex items-center justify-center text-primary shadow-sm">
-                 <span className="material-symbols-outlined text-3xl">cloud_sync</span>
-              </div>
-              <p className="text-[10px] text-stone-500 font-bold leading-relaxed uppercase tracking-widest">
-                Cada proceso genera un <span className="text-primary font-black">archivo digital persistente</span> en tu repositorio de investigación.
-              </p>
-           </div>
-        </div>
+             <div className="bg-primary/5 p-8 rounded-[2.5rem] border border-primary/10 flex items-center gap-6">
+                <div className="size-14 bg-white dark:bg-stone-800 rounded-2xl flex items-center justify-center text-primary shadow-sm">
+                   <span className="material-symbols-outlined text-3xl">cloud_sync</span>
+                </div>
+                <p className="text-[10px] text-stone-500 font-bold leading-relaxed uppercase tracking-widest">
+                  Cada proceso genera un <span className="text-primary font-black">archivo digital persistente</span> en tu repositorio de investigación.
+                </p>
+             </div>
+          </div>
+        )}
 
-        {/* PANEL DERECHO: TERMINAL / ARCHIVOS */}
-        <div className="lg:col-span-8">
+        {/* PANEL DERECHO: TERMINAL / ARCHIVOS - Ajusta su ancho según la pestaña */}
+        <div className={`${isExploringFiles ? 'lg:col-span-12' : 'lg:col-span-8'} transition-all duration-500`}>
            <div className="bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-[4rem] min-h-[750px] overflow-hidden relative shadow-sm flex flex-col">
               
               <div className="bg-stone-50/50 dark:bg-stone-950/30 p-8 border-b border-stone-50 dark:border-stone-800 flex justify-between items-center">
                  <div className="flex items-center gap-4">
                     <div className={`size-3 rounded-full ${result || loading ? 'bg-primary' : 'bg-stone-200'} animate-pulse`}></div>
                     <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-stone-400">
-                      {activeTab === 'investigacion' ? 'Explorador de Archivos Estratégicos' : 'Terminal de Estrategia Activa'}
+                      {isExploringFiles ? 'Explorador de Archivos Estratégicos' : 'Terminal de Estrategia Activa'}
                     </h3>
                  </div>
                  {result && activeTab === 'estrategia' && (
@@ -257,11 +261,11 @@ export const Recommendations: React.FC = () => {
 
               <div className="flex-1 overflow-y-auto custom-scrollbar p-10 md:p-16">
                 
-                {activeTab === 'investigacion' || activeTab === 'reportes' ? (
-                   <div className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {isExploringFiles ? (
+                   <div className="space-y-6 animate-fade-in">
+                      <div className={`grid grid-cols-1 ${isExploringFiles ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-6`}>
                         {savedReports.length > 0 ? savedReports.map(r => (
-                          <div key={r.id} className="bg-stone-50/50 dark:bg-stone-950/30 p-8 rounded-[3rem] border border-stone-100 dark:border-stone-800 flex flex-col justify-between group hover:border-primary/30 hover:shadow-xl transition-all h-[240px]">
+                          <div key={r.id} className="bg-stone-50/50 dark:bg-stone-950/30 p-8 rounded-[3rem] border border-stone-100 dark:border-stone-800 flex flex-col justify-between group hover:border-primary/30 hover:shadow-xl transition-all h-[200px]">
                              <div className="space-y-3">
                                 <div className="flex justify-between items-start">
                                   <div className="size-12 bg-white dark:bg-stone-800 rounded-2xl flex items-center justify-center text-primary shadow-sm group-hover:bg-primary group-hover:text-white transition-all">
@@ -270,9 +274,8 @@ export const Recommendations: React.FC = () => {
                                   <span className="text-[8px] font-black text-stone-300 uppercase tracking-widest">{r.fileSize}</span>
                                 </div>
                                 <div>
-                                   <h4 className="text-sm font-black dark:text-white uppercase tracking-tight line-clamp-1">{r.title}</h4>
+                                   <h4 className="text-sm font-black dark:text-white uppercase tracking-tight line-clamp-2">{r.title}</h4>
                                    <p className="text-[9px] font-black text-primary uppercase tracking-widest mt-1">{r.date}</p>
-                                   <p className="text-[10px] text-stone-400 italic mt-3 line-clamp-2">"{r.context}"</p>
                                 </div>
                              </div>
                              <div className="flex gap-3 pt-4 border-t border-stone-200 dark:border-stone-800 mt-4">

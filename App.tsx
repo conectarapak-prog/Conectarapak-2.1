@@ -16,10 +16,12 @@ import { EditProfile } from './pages/EditProfile';
 import { SecuritySettings } from './pages/SecuritySettings';
 import { FloatingChatbot } from './components/FloatingChatbot';
 import { LiveAssistant } from './components/LiveAssistant';
+import { LandingEntry } from './components/LandingEntry';
 import { View, Project, User, NewsItem } from './types';
 import { MOCK_NEWS } from './constants';
 
 const App: React.FC = () => {
+  const [showApp, setShowApp] = useState(false);
   const [currentView, setCurrentView] = useState<View>('home');
   const [viewHistory, setViewHistory] = useState<View[]>(['home']);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -46,8 +48,7 @@ const App: React.FC = () => {
   };
 
   const navigateTo = (view: View) => {
-    // Animación de salida suave
-    const root = document.getElementById('root');
+    const root = document.getElementById('main-content');
     if (root) root.style.opacity = '0';
     
     setTimeout(() => {
@@ -108,6 +109,10 @@ const App: React.FC = () => {
     }
   };
 
+  if (!showApp) {
+    return <LandingEntry onEnter={() => setShowApp(true)} />;
+  }
+
   if (hasApiKey === false) {
     return (
       <div className="fixed inset-0 z-[1000] bg-earth-dark flex items-center justify-center p-6 text-white overflow-hidden">
@@ -128,7 +133,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-transparent transition-opacity duration-500" id="root">
+    <div className="min-h-screen flex flex-col bg-transparent transition-opacity duration-1000 animate-fade-in" id="main-content">
       <Navbar currentView={currentView} setView={navigateTo} darkMode={darkMode} toggleDarkMode={() => setDarkMode(!darkMode)} onSearchChange={setSearchTerm} user={user} onLogout={() => setUser(null)} />
       
       <main className="flex-1 w-full flex flex-col items-center relative z-10 pt-32 px-10">

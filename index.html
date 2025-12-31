@@ -43,6 +43,7 @@
             --mx: 0;
             --my: 0;
             --scroll: 0;
+            --cursor-color: #76C94F;
         }
         
         body {
@@ -50,8 +51,11 @@
             color: #ffffff;
             overflow-x: hidden;
             scroll-behavior: smooth;
-            cursor: none; /* Usaremos un cursor personalizado para mayor fluidez */
+            cursor: none !important; /* Desactivar cursor nativo */
         }
+
+        /* Desactivar cursor en todos los elementos hijos */
+        * { cursor: none !important; }
 
         /* Rejilla de Fondo Cinética */
         body::before {
@@ -66,20 +70,94 @@
             z-index: -1;
         }
 
-        /* Cursor Personalizado Fluido */
-        .custom-cursor {
-            width: 20px;
-            height: 20px;
-            background: #76C94F;
-            border-radius: 50%;
+        /* --- SISTEMA DE CURSOR HUD --- */
+        .cursor-wrapper {
             position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             pointer-events: none;
-            z-index: 10000;
-            mix-blend-mode: difference;
-            transition: transform 0.1s ease-out, width 0.3s ease, height 0.3s ease, background 0.3s ease;
-            transform: translate(calc(var(--mx) * 1px - 10px), calc(var(--my) * 1px - 10px));
+            z-index: 99999;
         }
 
+        /* El punto central (Precisión) */
+        .cursor-dot {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: var(--cursor-color);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s, background 0.3s;
+            z-index: 2;
+        }
+
+        /* El halo dinámico (HUD) */
+        .cursor-halo {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(118, 201, 79, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s cubic-bezier(0.19, 1, 0.22, 1), 
+                        height 0.5s cubic-bezier(0.19, 1, 0.22, 1), 
+                        border 0.5s, opacity 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Retícula dentro del halo */
+        .cursor-halo::before, .cursor-halo::after {
+            content: '';
+            position: absolute;
+            background: var(--cursor-color);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .cursor-halo::before { width: 1px; height: 10px; top: -5px; } /* Mira superior */
+        .cursor-halo::after { width: 10px; height: 1px; left: -5px; } /* Mira lateral */
+
+        /* Etiquetas de Telemetría */
+        .cursor-label {
+            position: absolute;
+            left: 25px;
+            top: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 7px;
+            font-weight: 800;
+            color: var(--cursor-color);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            opacity: 0.4;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        /* ESTADOS DEL CURSOR */
+        body.is-hovering .cursor-halo {
+            width: 80px;
+            height: 80px;
+            border-color: var(--cursor-color);
+            background: rgba(118, 201, 79, 0.05);
+        }
+        body.is-hovering .cursor-halo::before, 
+        body.is-hovering .cursor-halo::after { opacity: 0.5; }
+        
+        body.is-clicking .cursor-dot {
+            transform: translate(-50%, -50%) scale(0.5);
+            background: #fff;
+        }
+        body.is-clicking .cursor-halo {
+            width: 30px;
+            height: 30px;
+            border-width: 4px;
+            opacity: 0.8;
+        }
+
+        /* Animaciones base */
         .kinetic-layer {
             transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
             transform: translate3d(
@@ -99,7 +177,6 @@
             transform: skewX(-5deg);
         }
 
-        /* Efecto de Vidrio Líquido */
         .glass-liquid {
             background: rgba(10, 10, 10, 0.4);
             backdrop-filter: blur(40px) saturate(180%);
@@ -135,34 +212,72 @@
 </script>
 </head>
 <body class="bg-earth-dark text-stone-100 font-sans antialiased selection:bg-primary/40 overflow-x-hidden">
+    
     <div id="root"></div>
-    <div class="custom-cursor" id="cursor"></div>
+
+    <!-- ESTRUCTURA DEL CURSOR HUD -->
+    <div class="cursor-wrapper">
+        <div class="cursor-dot" id="cursor-dot"></div>
+        <div class="cursor-halo" id="cursor-halo">
+            <div class="cursor-label" id="cursor-label">OS:READY</div>
+        </div>
+    </div>
+
     <script>
-        const cursor = document.getElementById('cursor');
+        const dot = document.getElementById('cursor-dot');
+        const halo = document.getElementById('cursor-halo');
+        const label = document.getElementById('cursor-label');
+
+        let mouseX = 0, mouseY = 0; // Posición real
+        let dotX = 0, dotY = 0;     // Posición del punto (Lerp suave)
+        let haloX = 0, haloY = 0;   // Posición del halo (Inercia elástica)
+
         document.addEventListener('mousemove', (e) => {
-            const mx = e.clientX;
-            const my = e.clientY;
-            document.documentElement.style.setProperty('--mx', mx);
-            document.documentElement.style.setProperty('--my', my);
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            document.documentElement.style.setProperty('--mx', mouseX);
+            document.documentElement.style.setProperty('--my', mouseY);
             
             // Relativas para parallax
-            const mxRel = (mx / window.innerWidth - 0.5) * 100;
-            const myRel = (my / window.innerHeight - 0.5) * 100;
+            const mxRel = (mouseX / window.innerWidth - 0.5) * 100;
+            const myRel = (mouseY / window.innerHeight - 0.5) * 100;
             document.documentElement.style.setProperty('--mx-rel', mxRel);
             document.documentElement.style.setProperty('--my-rel', myRel);
 
-            if (e.target.closest('button, a, .group')) {
-                cursor.style.width = '60px';
-                cursor.style.height = '60px';
-                cursor.style.background = 'rgba(118, 201, 79, 0.2)';
-                cursor.style.border = '1px solid #76C94F';
+            // Detectar interactivos
+            if (e.target.closest('button, a, .group, [role="button"], input, select, textarea')) {
+                document.body.classList.add('is-hovering');
+                label.innerText = e.target.closest('input, textarea') ? 'SYS:INPUT' : 'HUB:LINK';
             } else {
-                cursor.style.width = '20px';
-                cursor.style.height = '20px';
-                cursor.style.background = '#76C94F';
-                cursor.style.border = 'none';
+                document.body.classList.remove('is-hovering');
+                label.innerText = 'OS:SYNC';
             }
         });
+
+        document.addEventListener('mousedown', () => document.body.classList.add('is-clicking'));
+        document.addEventListener('mouseup', () => document.body.classList.remove('is-clicking'));
+
+        // Loop de Animación para el Cursor (Smooth Inertia)
+        function updateCursor() {
+            // Lerp para el punto (muy rápido)
+            dotX += (mouseX - dotX) * 0.35;
+            dotY += (mouseY - dotY) * 0.35;
+            
+            // Inercia elástica para el halo (más lento, se siente "pesado" y fluido)
+            haloX += (mouseX - haloX) * 0.15;
+            haloY += (mouseY - haloY) * 0.15;
+
+            dot.style.left = `${dotX}px`;
+            dot.style.top = `${dotY}px`;
+            
+            halo.style.left = `${haloX}px`;
+            halo.style.top = `${haloY}px`;
+
+            requestAnimationFrame(updateCursor);
+        }
+
+        updateCursor();
     </script>
 </body>
 </html>

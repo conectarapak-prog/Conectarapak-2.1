@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { NewsItem, User, UserRole } from '../types';
+import { NewsItem, User } from '../types';
 import { getPostInsight } from '../services/geminiService';
 
 interface FeedProps {
@@ -12,22 +12,14 @@ interface FeedProps {
 export const CommunityFeed: React.FC<FeedProps> = ({ news, onPublish, user }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('Todos');
-  const [isPosting, setIsPosting] = useState(false);
-  const [postText, setPostText] = useState('');
-  
-  const [activeInsightId, setActiveInsightId] = useState<string | number | null>(null);
-  const [insightLoading, setInsightLoading] = useState<string | number | null>(null);
   const [insights, setInsights] = useState<Record<string | number, string>>({});
-  
-  const [showSponsorModal, setShowSponsorModal] = useState<NewsItem | null>(null);
-  const [showCollabModal, setShowCollabModal] = useState<NewsItem | null>(null);
+  const [loadingId, setLoadingId] = useState<string | number | null>(null);
 
-  const filters = ['Todos', 'AUDITORÍA IA', 'TECNOLOGÍA', 'EMPRENDIMIENTO', 'ACADEMIA', 'POLÍTICA PÚBLICA'];
+  const filters = ['Todos', 'AUDITORÍA IA', 'TECNOLOGÍA', 'EMPRENDIMIENTO', 'ACADEMIA'];
 
   const filteredFeed = useMemo(() => {
     return news.filter(item => {
-      const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                           item.excerpt.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesFilter = activeFilter === 'Todos' || item.category === activeFilter;
       return matchesSearch && matchesFilter;
     });
@@ -35,169 +27,160 @@ export const CommunityFeed: React.FC<FeedProps> = ({ news, onPublish, user }) =>
 
   const handleFetchInsight = async (post: NewsItem) => {
     if (insights[post.id]) {
-      setActiveInsightId(activeInsightId === post.id ? null : post.id);
+      // Toggle visibility if already exists
+      const newInsights = { ...insights };
+      delete newInsights[post.id];
+      setInsights(newInsights);
       return;
     }
-    setInsightLoading(post.id);
+    setLoadingId(post.id);
     const result = await getPostInsight(post.title, post.excerpt, user?.role || 'entrepreneur');
-    if (result) {
-      setInsights(prev => ({ ...prev, [post.id]: result }));
-      setActiveInsightId(post.id);
-    }
-    setInsightLoading(null);
+    if (result) setInsights(prev => ({ ...prev, [post.id]: result }));
+    setLoadingId(null);
   };
 
-  // Configuración de visualización por rol
-  const getRoleConfig = (role: UserRole | undefined) => {
-    switch (role) {
-      case 'entrepreneur':
-        return { label: 'Impacto Regional', val: '840 pts', stat: '12 Nodos', color: 'bg-primary' };
-      case 'investor_natural':
-        return { label: 'Aporte Social', val: '$450k', stat: '5 Proyectos', color: 'bg-blue-600' };
-      case 'investor_legal':
-        return { label: 'Cartera ESG', val: '$12.5M', stat: 'Score 9.4', color: 'bg-indigo-600' };
-      case 'advisor':
-        return { label: 'Retroeducación', val: '42 Horas', stat: '15 Mentorías', color: 'bg-amber-600' };
-      default:
-        return { label: 'Impacto', val: '0 pts', stat: '0 Nodos', color: 'bg-stone-500' };
-    }
+  // Función para formatear el texto técnico de la IA
+  const renderInsightText = (text: string) => {
+    return text.split('\n').map((line, i) => {
+      if (!line.trim()) return null;
+      
+      // Manejo de títulos técnicos ###
+      if (line.startsWith('###')) {
+        return <h4 key={i} className="text-primary font-black mt-4 mb-2 uppercase tracking-widest text-[10px] border-b border-primary/20 pb-1">{line.replace(/###/g, '')}</h4>;
+      }
+      
+      // Manejo de negritas **text**
+      const parts = line.split(/(\*\*.*?\*\*)/g);
+      return (
+        <p key={i} className="mb-2 leading-relaxed">
+          {parts.map((part, j) => {
+            if (part.startsWith('**') && part.endsWith('**')) {
+              return <span key={j} className="text-white font-black">{part.slice(2, -2)}</span>;
+            }
+            return part.replace(/^[*-]\s*/, '• ');
+          })}
+        </p>
+      );
+    });
   };
-
-  const roleConfig = getRoleConfig(user?.role);
 
   return (
-    <div className="w-full flex flex-col lg:flex-row gap-6 animate-fade-in items-start">
+    <div className="w-full space-y-16 py-8 max-w-7xl mx-auto px-4">
       
-      {/* SIDEBAR ADAPTATIVO POR ROL */}
-      <aside className="lg:w-72 w-full lg:sticky lg:top-24 space-y-4">
-        <div className="bg-white dark:bg-stone-900 rounded-[1.5rem] border border-stone-100 dark:border-stone-800 overflow-hidden shadow-sm">
-           <div className={`h-16 ${roleConfig.color} transition-colors duration-500`}></div>
-           <div className="px-5 pb-6 -mt-8 flex flex-col items-center text-center">
-              <img 
-                src={user?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=default"} 
-                className="size-16 rounded-2xl border-4 border-white dark:border-stone-900 bg-stone-50 shadow-md mb-3"
-              />
-              <h3 className="text-sm font-black dark:text-white uppercase tracking-tight">
-                {user?.name || "Invitado Circular"}
-              </h3>
-              <p className={`text-[9px] font-bold uppercase tracking-widest mt-0.5 opacity-80 ${roleConfig.color.replace('bg-', 'text-')}`}>
-                {user?.role?.replace('_', ' ') || "Explorador"}
-              </p>
-              
-              <div className="w-full mt-6 pt-6 border-t border-stone-50 dark:border-stone-800 space-y-3">
-                 <div className="flex justify-between items-center text-[10px]">
-                    <span className="font-bold text-stone-400 uppercase tracking-tighter">{roleConfig.label}</span>
-                    <span className={`font-black ${roleConfig.color.replace('bg-', 'text-')}`}>{roleConfig.val}</span>
-                 </div>
-                 <div className="flex justify-between items-center text-[10px]">
-                    <span className="font-bold text-stone-400 uppercase tracking-tighter">Status</span>
-                    <span className={`font-black ${roleConfig.color.replace('bg-', 'text-')}`}>{roleConfig.stat}</span>
-                 </div>
-              </div>
-           </div>
-        </div>
-
-        {user?.role === 'advisor' && (
-          <div className="bg-amber-50 dark:bg-amber-900/10 rounded-[1.5rem] border border-amber-100 dark:border-amber-800/20 p-5 shadow-sm">
-             <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-amber-600 mb-4">Mentoría Activa</h4>
-             <div className="flex gap-3 items-center">
-                <span className="material-symbols-outlined text-amber-500 text-lg">school</span>
-                <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400">3 Solicitudes pendientes</p>
-             </div>
+      {/* HEADER COMPACTO */}
+      <section className="flex flex-col lg:flex-row justify-between items-end gap-8 border-b border-white/5 pb-12">
+        <div className="space-y-4 text-left">
+          <div className="flex items-center gap-3">
+            <span className="size-2 bg-primary rounded-full animate-pulse shadow-[0_0_10px_#76C94F]"></span>
+            <p className="text-[9px] font-mono font-black text-stone-500 uppercase tracking-[0.6em]">Network.Broadcast_v4</p>
           </div>
-        )}
-      </aside>
-
-      {/* FEED CENTRAL */}
-      <main className="flex-1 w-full space-y-6">
-        <div className="bg-white dark:bg-stone-900 rounded-[1.5rem] border border-stone-100 dark:border-stone-800 p-5 flex items-center gap-4 shadow-sm">
-           <img src={user?.avatar} className="size-10 rounded-xl bg-stone-50" />
-           <button 
-             onClick={() => setIsPosting(true)}
-             className="flex-1 h-10 bg-stone-50 dark:bg-stone-800 rounded-xl px-4 text-left text-xs font-medium text-stone-400 hover:bg-stone-100 transition-colors border border-transparent focus:border-primary"
-           >
-             {user?.role === 'advisor' ? 'Comparte una lección técnica...' : 'Comparte tu avance circular...'}
-           </button>
+          <h2 className="text-5xl md:text-7xl font-black dark:text-white tracking-tighter uppercase leading-[0.9]">
+            Actividad de <br/><span className="text-stone-800 italic font-light">Ecosistema</span>
+          </h2>
         </div>
-
-        {/* Filtros */}
-        <div className="flex overflow-x-auto no-scrollbar gap-2">
+        
+        <div className="flex flex-wrap gap-2">
            {filters.map(f => (
              <button
                key={f}
                onClick={() => setActiveFilter(f)}
-               className={`px-4 py-1.5 rounded-full whitespace-nowrap text-[8px] font-black uppercase tracking-widest border transition-all ${
+               className={`px-6 py-3 rounded-full text-[8px] font-mono font-black uppercase tracking-widest transition-all border ${
                  activeFilter === f 
-                 ? `${roleConfig.color} text-white border-transparent shadow-sm` 
-                 : 'bg-white dark:bg-stone-900 text-stone-400 border-stone-100 dark:border-stone-800'
+                 ? 'bg-white text-stone-950 border-transparent shadow-xl' 
+                 : 'bg-stone-900/50 text-stone-500 border-white/5 hover:border-primary/50'
                }`}
              >
                {f}
              </button>
            ))}
         </div>
+      </section>
 
-        {/* Listado de Posts */}
-        <div className="space-y-4">
-           {filteredFeed.map((post) => (
-             <article 
-               key={post.id}
-               className="bg-white dark:bg-stone-900 rounded-[1.8rem] border border-stone-100 dark:border-stone-800 overflow-hidden shadow-sm hover:shadow-md transition-all"
-             >
-               <div className="p-6 pb-2 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                     <img src={post.authorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.id}`} className="size-9 rounded-lg border border-stone-50" />
-                     <div>
-                        <div className="flex items-center gap-1.5">
-                           <p className="text-[10px] font-black uppercase dark:text-white tracking-tight">{post.authorName || "Actor Regional"}</p>
-                           <span className="material-symbols-outlined text-primary text-[10px]">verified</span>
-                        </div>
-                        <p className="text-[8px] font-bold text-stone-400 uppercase tracking-widest">{post.date}</p>
-                     </div>
-                  </div>
-                  <span className="text-[8px] font-black text-stone-300 uppercase tracking-widest">{post.category}</span>
+      {/* GRID DE ALTA DENSIDAD */}
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredFeed.map((post, idx) => (
+          <article 
+            key={post.id} 
+            className="bg-stone-950 border border-white/10 rounded-[3rem] p-10 flex flex-col justify-between group hover:border-primary/30 transition-all duration-500 h-[650px] relative overflow-hidden animate-fade-in"
+            style={{ animationDelay: `${idx * 100}ms` }}
+          >
+            {/* Fondo de rejilla técnica Nosigner */}
+            <div className="absolute inset-0 grid-technical opacity-[0.03] pointer-events-none group-hover:opacity-[0.07] transition-opacity"></div>
+            
+            <div className="space-y-8 relative z-10 flex flex-col h-full overflow-hidden">
+               <div className="flex justify-between items-start">
+                  <span className="bg-white/5 px-4 py-1.5 rounded-full text-[8px] font-mono font-black text-primary uppercase tracking-widest border border-white/5">{post.category}</span>
+                  <span className="text-[8px] font-mono font-bold text-stone-600 uppercase tracking-widest">{post.date}</span>
+               </div>
+               
+               <div className="space-y-3">
+                  <h3 className="text-2xl font-black text-white uppercase tracking-tighter leading-tight group-hover:text-primary transition-colors h-[3.5rem] line-clamp-2">
+                    {post.title}
+                  </h3>
+                  <p className="text-xs text-stone-500 font-medium leading-relaxed line-clamp-3 lowercase tracking-tight border-l border-white/10 pl-4">
+                    {post.excerpt}
+                  </p>
                </div>
 
-               <div className="px-6 py-4">
-                  <h3 className="text-lg font-black dark:text-white tracking-tight uppercase leading-tight mb-3">{post.title}</h3>
-                  <p className="text-xs font-medium text-stone-600 dark:text-stone-400 leading-relaxed">{post.excerpt}</p>
-                  
-                  {activeInsightId === post.id && insights[post.id] && (
-                    <div className="mt-4 bg-stone-50 dark:bg-stone-950 rounded-2xl p-6 border-l-4 border-primary animate-[slide-down_0.3s_ease-out]">
-                       <h5 className={`text-[8px] font-black uppercase tracking-[0.3em] mb-2 ${roleConfig.color.replace('bg-', 'text-')}`}>
-                          Análisis para {user?.role?.replace('_', ' ')}
-                       </h5>
-                       <p className="text-[11px] font-medium text-stone-700 dark:text-stone-300 italic leading-relaxed whitespace-pre-wrap">
-                          {insights[post.id]}
-                       </p>
+               {/* Bloque de INSIGHTS IA Optimizado */}
+               <div className={`transition-all duration-700 ease-in-out flex-1 flex flex-col overflow-hidden ${insights[post.id] ? 'opacity-100 mt-4' : 'opacity-0 h-0'}`}>
+                 <div className="flex-1 bg-stone-900/80 border border-primary/20 rounded-[2rem] p-6 text-[10px] font-mono text-stone-400 overflow-y-auto custom-scrollbar shadow-inner relative">
+                    <div className="sticky top-0 bg-stone-900/90 backdrop-blur-sm pb-2 mb-4 border-b border-primary/10 flex justify-between items-center">
+                       <span className="text-primary font-black uppercase tracking-[0.4em] flex items-center gap-2">
+                         <span className="material-symbols-outlined text-[14px] animate-pulse">terminal</span> 
+                         AI_DIAGNOSTIC_V1
+                       </span>
+                       <span className="text-[8px] opacity-30">SYS_OK</span>
                     </div>
-                  )}
+                    <div className="animate-fade-in">
+                       {insights[post.id] ? renderInsightText(insights[post.id]) : null}
+                    </div>
+                 </div>
                </div>
+            </div>
 
-               <div className="px-6 py-4 border-t border-stone-50 dark:border-stone-800 flex justify-between bg-stone-50/20">
-                  <div className="flex gap-4">
-                     {(user?.role?.includes('investor')) && (
-                       <button onClick={() => setShowSponsorModal(post)} className="flex items-center gap-1.5 text-stone-400 hover:text-primary transition-colors text-[9px] font-black uppercase tracking-widest">
-                          <span className="material-symbols-outlined text-sm">rocket_launch</span> Patrocinar
-                       </button>
-                     )}
-                     <button onClick={() => handleFetchInsight(post)} className={`flex items-center gap-1.5 transition-colors text-[9px] font-black uppercase tracking-widest ${activeInsightId === post.id ? 'text-primary' : 'text-stone-400 hover:text-primary'}`}>
-                        <span className="material-symbols-outlined text-sm">psychology</span> Insight IA
-                     </button>
-                     <button onClick={() => setShowCollabModal(post)} className="flex items-center gap-1.5 text-stone-400 hover:text-info transition-colors text-[9px] font-black uppercase tracking-widest">
-                        <span className="material-symbols-outlined text-sm">handshake</span> {user?.role === 'advisor' ? 'Mentorear' : 'Colaborar'}
-                     </button>
+            <div className="pt-8 flex flex-col gap-4 relative z-10">
+               <button 
+                 onClick={() => handleFetchInsight(post)}
+                 disabled={loadingId === post.id}
+                 className={`w-full h-14 rounded-2xl border transition-all flex items-center justify-center gap-3 text-[9px] font-mono font-black uppercase tracking-[0.3em] overflow-hidden group/btn ${
+                   insights[post.id] 
+                   ? 'bg-primary text-white border-primary shadow-[0_0_20px_rgba(118,201,79,0.3)]' 
+                   : 'bg-stone-900 text-stone-500 border-white/10 hover:border-primary hover:text-white'
+                 }`}
+               >
+                 {loadingId === post.id ? (
+                   <div className="flex items-center gap-2">
+                      <div className="size-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Sincronizando...</span>
+                   </div>
+                 ) : (
+                   <>
+                     <span>{insights[post.id] ? 'Cerrar Análisis' : 'Extraer Insights IA'}</span>
+                     <span className="material-symbols-outlined text-sm transition-transform group-hover/btn:rotate-12">
+                       {insights[post.id] ? 'close' : 'psychology'}
+                     </span>
+                   </>
+                 )}
+               </button>
+               
+               <div className="flex items-center justify-between px-2">
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-full border border-white/10 overflow-hidden grayscale group-hover:grayscale-0 transition-all shadow-lg">
+                       <img src={post.authorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.id}`} className="w-full h-full object-cover" />
+                    </div>
+                    <span className="text-[8px] font-mono font-bold uppercase text-stone-600 tracking-widest">Nodo_Broadcast: {post.id}</span>
+                  </div>
+                  <div className="flex gap-1">
+                     <div className="size-1 rounded-full bg-primary/20"></div>
+                     <div className="size-1 rounded-full bg-primary/20"></div>
+                     <div className="size-1 rounded-full bg-primary"></div>
                   </div>
                </div>
-             </article>
-           ))}
-        </div>
-      </main>
-
-      <style>{`
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        @keyframes slide-down { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-      `}</style>
+            </div>
+          </article>
+        ))}
+      </section>
     </div>
   );
 };

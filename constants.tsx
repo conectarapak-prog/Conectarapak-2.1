@@ -96,11 +96,11 @@ export const MOCK_NEWS = [
 ];
 
 export const MAP_ACTORS = [
-  { id: 1, name: "Puerto Iquique Sostenible", type: "Privado", x: "45%", y: "40%", icon: "directions_boat" },
-  { id: 2, name: "UNAP Innovación", type: "Académico", x: "52%", y: "48%", icon: "school" },
-  { id: 3, name: "ZOFRI Circular", type: "Gremio", x: "48%", y: "35%", icon: "inventory_2" },
-  { id: 4, name: "Gobernación Regional", type: "Público", x: "50%", y: "55%", icon: "account_balance" },
-  { id: 5, name: "Hub Tecnológico Tarapacá", type: "ONG", x: "55%", y: "60%", icon: "hub" },
+  { id: 1, name: "Puerto Iquique Sostenible", type: "Privado", x: "45%", y: "40%", icon: "directions_boat", url: "https://www.epi.cl" },
+  { id: 2, name: "UNAP Innovación", type: "Académico", x: "52%", y: "48%", icon: "school", url: "https://www.unap.cl" },
+  { id: 3, name: "ZOFRI Circular", type: "Gremio", x: "48%", y: "35%", icon: "inventory_2", url: "https://www.zofri.cl" },
+  { id: 4, name: "Gobernación Regional", type: "Público", x: "50%", y: "55%", icon: "account_balance", url: "https://www.goretarapaca.gov.cl" },
+  { id: 5, name: "Hub Tecnológico Tarapacá", type: "ONG", x: "55%", y: "60%", icon: "hub", url: "https://www.hubtarapaca.cl" },
 ];
 
 export const SPONSORS = [

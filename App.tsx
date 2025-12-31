@@ -23,17 +23,15 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('home');
   const [viewHistory, setViewHistory] = useState<View[]>(['home']);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [user, setUser] = useState<User | null>(null);
   const [newsFeed, setNewsFeed] = useState<NewsItem[]>(MOCK_NEWS);
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (darkMode) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
     checkApiKey();
-  }, [darkMode]);
+  }, []);
 
   const checkApiKey = async () => {
     // @ts-ignore
@@ -48,10 +46,18 @@ const App: React.FC = () => {
   };
 
   const navigateTo = (view: View) => {
-    if (view !== currentView) {
-      setViewHistory(prev => [...prev, currentView]);
-      setCurrentView(view);
-    }
+    // Animación de salida suave
+    const root = document.getElementById('root');
+    if (root) root.style.opacity = '0';
+    
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      if (view !== currentView) {
+        setViewHistory(prev => [...prev, currentView]);
+        setCurrentView(view);
+      }
+      if (root) root.style.opacity = '1';
+    }, 400);
   };
 
   const goBack = () => {
@@ -67,24 +73,15 @@ const App: React.FC = () => {
     navigateTo('dashboard');
   };
 
-  const handleUpdateUser = (updatedUser: User) => {
-    setUser(updatedUser);
-    navigateTo('dashboard');
-  };
-
   const publishInsight = (insight: Partial<NewsItem>) => {
     const newItem: NewsItem = {
       id: Date.now(),
-      title: insight.title || "Nuevo Insight de IA",
-      category: insight.category || "AUDITORÍA IA",
-      tag: "Gemini Pro",
-      image: insight.image || "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=1200",
-      date: new Date().toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase(),
+      title: insight.title || "Nuevo Insight",
+      category: insight.category || "IA",
+      tag: "Gemini",
+      image: insight.image || "",
+      date: new Date().toLocaleDateString(),
       excerpt: insight.excerpt || "",
-      facts: insight.facts,
-      interpretation: insight.interpretation,
-      authorName: user?.name,
-      authorAvatar: user?.avatar,
       isAI: true
     };
     setNewsFeed(prev => [newItem, ...prev]);
@@ -99,12 +96,12 @@ const App: React.FC = () => {
       case 'feed': return <CommunityFeed news={newsFeed} onPublish={publishInsight} user={user} />;
       case 'dashboard': return <Dashboard setView={navigateTo} userRole={user?.role} userName={user?.name} />;
       case 'discovery': return <ProjectDiscovery setView={navigateTo} onProjectClick={(p) => { setSelectedProject(p); navigateTo('detail'); }} searchTerm={searchTerm} onPublish={publishInsight} />;
-      case 'detail': return selectedProject ? <ProjectDetail project={selectedProject} onPublish={publishInsight} /> : <ProjectDiscovery setView={navigateTo} onProjectClick={(p) => { setSelectedProject(p); navigateTo('detail'); }} searchTerm={searchTerm} onPublish={publishInsight} />;
+      case 'detail': return selectedProject ? <ProjectDetail project={selectedProject} onPublish={publishInsight} /> : <Home setView={navigateTo} />;
       case 'admin': return <AdminModeration />;
-      case 'analysis': return <AIPowerLab onPublish={publishInsight} />;
+      case 'analysis': return <AIPowerLab />;
       case 'recommendations': return <Recommendations />;
       case 'education': return <Education />;
-      case 'edit': return user ? <EditProfile user={user} onUpdate={handleUpdateUser} onCancel={goBack} /> : <Home setView={navigateTo} />;
+      case 'edit': return user ? <EditProfile user={user} onUpdate={(u) => setUser(u)} onCancel={goBack} /> : <Home setView={navigateTo} />;
       case 'settings': return <SecuritySettings onBack={goBack} />;
       case 'contact': return <Contact setView={navigateTo} />;
       default: return <Home setView={navigateTo} />;
@@ -113,44 +110,35 @@ const App: React.FC = () => {
 
   if (hasApiKey === false) {
     return (
-      <div className="fixed inset-0 z-[1000] bg-earth-surface flex items-center justify-center p-6 text-white">
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-md"></div>
-        <div className="max-w-xl w-full bg-white dark:bg-earth-card p-12 rounded-[3rem] border border-stone-200 dark:border-stone-800 shadow-2xl relative z-10 text-center space-y-8">
-           <div className="size-20 bg-primary/20 rounded-3xl flex items-center justify-center mx-auto">
-              <span className="material-symbols-outlined text-4xl text-primary">vpn_key</span>
+      <div className="fixed inset-0 z-[1000] bg-earth-dark flex items-center justify-center p-6 text-white overflow-hidden">
+        <div className="absolute inset-0 bg-primary/5 blur-[120px] animate-pulse"></div>
+        <div className="max-w-xl w-full bg-stone-950 p-20 rounded-[5rem] border border-white/10 shadow-3xl relative z-10 text-center space-y-16">
+           <div className="size-24 bg-primary/10 rounded-[2.5rem] flex items-center justify-center mx-auto border border-primary/20">
+              <span className="material-symbols-outlined text-5xl text-primary animate-float">vpn_key</span>
            </div>
-           <div className="space-y-4">
-              <h2 className="text-3xl font-black uppercase tracking-tighter dark:text-white">Activar IA Pro</h2>
-              <p className="text-stone-500 text-sm font-medium leading-relaxed">CONECTARAPAK requiere una Llave API de Google Cloud para procesos de alta precisión.</p>
+           <div className="space-y-6">
+              <h2 className="text-6xl font-black uppercase tracking-tighter dark:text-white leading-none font-display">Activar<br/><span className="text-primary italic">Protocolo</span></h2>
+              <p className="text-stone-500 text-[11px] font-mono font-bold leading-relaxed uppercase tracking-[0.5em]">Se requiere autenticación de API para operaciones de alta fidelidad.</p>
            </div>
-           <button onClick={handleOpenKeySelector} className="w-full h-16 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 flex items-center justify-center gap-4">Configurar Llave</button>
-           <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" className="block text-[10px] font-black uppercase tracking-widest text-stone-400 hover:text-primary">Info. de Facturación</a>
+           <button onClick={handleOpenKeySelector} className="w-full h-24 bg-white text-stone-950 rounded-full font-mono font-black text-[12px] uppercase tracking-[0.5em] shadow-3xl hover:bg-primary hover:text-white transition-all active:scale-95">Sincronizar Nodo</button>
+           <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" className="block text-[9px] font-mono font-black uppercase tracking-[0.4em] text-stone-700 hover:text-primary transition-colors italic">Doc_Billing.sys</a>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50/50 dark:bg-earth-dark transition-colors duration-300">
-      <Navbar currentView={currentView} setView={navigateTo} darkMode={darkMode} toggleDarkMode={() => setDarkMode(!darkMode)} onSearchChange={setSearchTerm} user={user} onLogout={() => { setUser(null); setCurrentView('home'); }} />
+    <div className="min-h-screen flex flex-col bg-transparent transition-opacity duration-500" id="root">
+      <Navbar currentView={currentView} setView={navigateTo} darkMode={darkMode} toggleDarkMode={() => setDarkMode(!darkMode)} onSearchChange={setSearchTerm} user={user} onLogout={() => setUser(null)} />
       
-      <main className="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-6 md:py-12 flex flex-col items-center relative">
-        
-        {/* BACK PROTOCOL ICON - Posicionado estratégicamente */}
+      <main className="flex-1 w-full flex flex-col items-center relative z-10 pt-32 px-10">
         {currentView !== 'home' && currentView !== 'login' && (
-          <div className="absolute top-0 left-4 md:left-8 lg:left-12 z-40 animate-fade-in">
-            <button 
-              onClick={goBack}
-              className="group flex items-center gap-3 bg-white/60 dark:bg-earth-card/60 backdrop-blur-md border border-stone-200/50 dark:border-stone-800/50 px-4 py-2 rounded-2xl shadow-sm hover:shadow-xl hover:border-primary/30 transition-all duration-500"
-            >
-              <div className="size-8 rounded-xl bg-white dark:bg-stone-900 flex items-center justify-center text-stone-400 group-hover:text-primary transition-colors">
-                <span className="material-symbols-outlined text-xl group-hover:-translate-x-1 transition-transform">arrow_back</span>
-              </div>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 group-hover:text-primary hidden md:block">Retroceder</span>
+          <div className="fixed top-36 left-14 z-50">
+            <button onClick={goBack} className="size-16 bg-stone-950/40 backdrop-blur-3xl border border-white/5 rounded-full shadow-3xl flex items-center justify-center hover:scale-110 hover:border-primary transition-all group">
+              <span className="material-symbols-outlined text-stone-500 text-2xl group-hover:text-primary transition-colors">west</span>
             </button>
           </div>
         )}
-
         <div className="w-full">
           {renderView()}
         </div>
@@ -158,10 +146,20 @@ const App: React.FC = () => {
       
       {user && currentView !== 'login' && <><FloatingChatbot /><LiveAssistant /></>}
       
-      <footer className="bg-white dark:bg-earth-card border-t border-stone-100 dark:border-stone-800 py-10">
-        <div className="max-w-7xl mx-auto px-10 flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigateTo('home')}><span className="font-extrabold text-xl dark:text-white tracking-tighter uppercase">CONECTARAPAK</span></div>
-          <p className="text-stone-400 text-[10px] font-black uppercase tracking-widest">© 2024 CONECTARAPAK • Inteligencia Regional Sostenible</p>
+      <footer className="py-40 px-14 border-t border-white/5 mt-60 bg-stone-950/10">
+        <div className="max-w-[1700px] mx-auto flex flex-col md:flex-row justify-between items-end gap-20">
+          <div className="space-y-8">
+            <h2 className="text-5xl font-black dark:text-white tracking-tighter uppercase font-display fluid-title">CONECTARAPAK</h2>
+            <p className="text-[10px] font-mono text-stone-600 uppercase tracking-[0.6em] leading-loose italic">
+              infraestructura de datos circular integrada. <br/> tarapacá regional node v4.5.2_beta
+            </p>
+          </div>
+          <div className="flex flex-col items-end gap-4">
+             <div className="flex gap-1">
+                {[1,2,3,4,5].map(i => <div key={i} className="size-1.5 bg-stone-900 rounded-full"></div>)}
+             </div>
+             <p className="text-stone-800 text-[10px] font-mono font-black uppercase tracking-[0.4em]">© 2024 DESIGN_BY_NOSIGNER_PROTOCOL</p>
+          </div>
         </div>
       </footer>
     </div>

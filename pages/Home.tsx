@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { MAP_ACTORS as INITIAL_MAP_ACTORS } from '../constants';
 
 interface HomeProps {
@@ -10,196 +10,226 @@ export const Home: React.FC<HomeProps> = ({ setView }) => {
   const [activeActor, setActiveActor] = useState<typeof INITIAL_MAP_ACTORS[0] | null>(null);
   const [mapFilter, setMapFilter] = useState<string>('Todos');
 
-  const TarapacaPath = "M45,10 L55,15 L65,25 L70,45 L68,65 L60,85 L45,95 L35,80 L32,60 L35,40 L38,20 Z";
-
   const filteredActors = useMemo(() => {
     if (mapFilter === 'Todos') return INITIAL_MAP_ACTORS;
     return INITIAL_MAP_ACTORS.filter(actor => actor.type === mapFilter);
   }, [mapFilter]);
 
+  const handleOfficialRedirect = (url: string) => {
+    // Protocolo de salida fluida
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 bg-stone-950 z-[10000] opacity-0 transition-opacity duration-700 pointer-events-none';
+    document.body.appendChild(overlay);
+    
+    setTimeout(() => overlay.style.opacity = '1', 10);
+    
+    setTimeout(() => {
+      window.open(url, '_blank', 'noopener,noreferrer');
+      overlay.style.opacity = '0';
+      setTimeout(() => overlay.remove(), 700);
+    }, 600);
+  };
+
   return (
-    <div className="flex flex-col gap-24 animate-fade-in w-full items-center text-center">
+    <div className="flex flex-col w-full items-center pb-40 overflow-visible bg-transparent">
       
-      {/* ATMÓSFERA 1: MARCA Y VISIÓN */}
-      <section className="relative w-full flex flex-col items-center justify-center py-20 lg:py-40 bg-white dark:bg-earth-card rounded-[4rem] border border-stone-100 dark:border-stone-800 shadow-xl overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent"></div>
-        <div className="relative z-10 max-w-4xl px-10 space-y-12">
-          <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-primary/10 text-primary border border-primary/20">
-             <span className="material-symbols-outlined text-sm">verified_user</span>
-             <span className="text-[10px] font-black uppercase tracking-[0.4em]">Plataforma de Impacto Regional</span>
+      {/* HERO SECTION - KINETIC TYPOGRAPHY */}
+      <section className="relative w-full min-h-screen flex flex-col items-center justify-center py-20 overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-[800px] bg-primary/5 rounded-full blur-[150px] animate-pulse pointer-events-none"></div>
+        
+        <div className="relative z-10 max-w-7xl px-10 text-center space-y-16 kinetic-layer" style={{"--depth": 4} as any}>
+          <div className="flex flex-col items-center gap-8">
+            <div className="flex items-center gap-4 bg-stone-900/40 backdrop-blur-3xl border border-white/5 px-6 py-2.5 rounded-full shadow-2xl">
+               <span className="size-1.5 bg-primary rounded-full animate-pulse shadow-[0_0_15px_#76C94F]"></span>
+               <span className="text-[9px] font-mono font-black uppercase tracking-[0.6em] text-white/50 italic">Core.Sync_Protocol</span>
+            </div>
+            
+            <h1 className="text-8xl md:text-[14rem] font-black text-white leading-[0.8] tracking-[-0.06em] uppercase font-display select-none fluid-title">
+              <span>SISTEMA <br/><span className="text-stone-900 italic font-light">REGEN</span></span>
+            </h1>
           </div>
-          <h1 className="text-6xl md:text-8xl font-black text-stone-900 dark:text-white leading-[0.9] tracking-tighter uppercase font-display">
-            REDISEÑANDO EL <br/><span className="text-primary italic">FUTURO</span> CIRCULAR
-          </h1>
-          <p className="text-lg md:text-xl text-stone-500 font-medium max-w-2xl mx-auto italic leading-relaxed">
-            La red de inteligencia colectiva que conecta cada residuo con su próximo valor en la Región de Tarapacá.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-6 pt-6">
-            <button onClick={() => setView('discovery')} className="bg-primary text-white px-12 py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-primary-hover shadow-2xl shadow-primary/30 transition-all active:scale-95">
-              Explorar Ecosistema
-            </button>
-            <button onClick={() => setView('feed')} className="bg-white dark:bg-stone-800 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-700 px-12 py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-stone-100 dark:hover:bg-stone-700 transition-all shadow-sm">
-              Ver Feed Comunitario
-            </button>
+          
+          <div className="flex flex-col items-center gap-14 max-w-4xl mx-auto">
+            <p className="text-2xl md:text-3xl text-stone-500 font-mono font-medium leading-tight lowercase tracking-tight border-l-2 border-primary/20 pl-10 text-left italic">
+              Orquestación territorial mediante <span className="text-white">inteligencia artificial</span> para la transformación de pasivos industriales en activos regenerativos.
+            </p>
+
+            <div className="flex flex-wrap justify-center gap-8 pt-6">
+              <button 
+                onClick={() => setView('discovery')} 
+                className="h-24 px-24 bg-white text-stone-950 rounded-full font-mono font-black text-[11px] uppercase tracking-[0.4em] hover:bg-primary hover:text-white transition-all shadow-[0_30px_60px_rgba(0,0,0,0.4)] hover:-translate-y-2 active:scale-95"
+              >
+                Ingresar al Ecosistema
+              </button>
+              <button onClick={() => setView('feed')} className="flex items-center gap-4 text-stone-600 font-mono font-black text-[10px] uppercase tracking-[0.4em] hover:text-primary transition-colors group">
+                Explorar Bitácora <span className="material-symbols-outlined text-sm group-hover:translate-x-3 transition-transform">east</span>
+              </button>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ATMÓSFERA 2: CARTOGRAFÍA DE IMPACTO OPTIMIZADA */}
-      <section className="w-full max-w-6xl mx-auto flex flex-col items-center gap-12 px-6">
-        <div className="w-full text-center space-y-6">
-           <div className="flex items-center justify-center gap-3 mb-2">
-              <span className="h-px w-12 bg-primary/30"></span>
-              <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.7em]">Cartografía de Impacto</h4>
-              <span className="h-px w-12 bg-primary/30"></span>
+      {/* MAPA FLUIDO - HUD DE PRECISIÓN */}
+      <section className="w-full max-w-[1700px] mx-auto py-40 px-8 space-y-32 relative">
+        <div className="flex flex-col lg:flex-row justify-between items-end gap-20 border-b border-white/5 pb-20">
+           <div className="space-y-6 kinetic-layer" style={{"--depth": 2} as any}>
+              <p className="text-[11px] font-mono font-black text-primary uppercase tracking-[1em] mb-4">01.Cartografía_Interconectada</p>
+              <h2 className="text-8xl md:text-9xl font-black text-white tracking-tighter uppercase leading-[0.8] fluid-title">
+                Visor de <span className="text-stone-950 italic">Nodos</span>
+              </h2>
            </div>
-           <h3 className="text-5xl md:text-7xl font-black dark:text-white tracking-tighter uppercase leading-none">
-             Territorio <span className="text-stone-300 italic">Inteligente</span>
-           </h3>
-           <p className="text-stone-500 dark:text-stone-400 text-lg leading-relaxed font-medium max-w-3xl mx-auto">
-             Visualiza los nodos críticos de la economía circular. Desde puertos sostenibles hasta hubs tecnológicos, conectamos cada actor para un Tarapacá sin residuos.
-           </p>
            
-           <div className="flex flex-wrap justify-center gap-3 pt-4">
-              {['Todos', 'Público', 'Privado', 'Académico', 'Gremio'].map((type) => (
+           <div className="glass-liquid p-2 rounded-[2.5rem] flex gap-2">
+              {['Todos', 'Público', 'Privado', 'Gremio'].map((type) => (
                 <button
                   key={type}
                   onClick={() => setMapFilter(type)}
-                  className={`px-8 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 border ${
+                  className={`px-12 py-5 rounded-[1.8rem] text-[10px] font-mono font-black uppercase tracking-widest transition-all ${
                     mapFilter === type 
-                    ? 'bg-primary text-white border-transparent shadow-xl shadow-primary/20 scale-105' 
-                    : 'bg-white dark:bg-stone-900 text-stone-400 border-stone-100 dark:border-stone-800 hover:border-primary/50'
+                    ? 'bg-white text-stone-950 shadow-2xl' 
+                    : 'text-stone-500 hover:text-stone-200'
                   }`}
                 >
-                  <span className={`size-1.5 rounded-full ${mapFilter === type ? 'bg-white animate-pulse' : 'bg-stone-200'}`}></span>
                   {type}
                 </button>
               ))}
             </div>
         </div>
 
-        {/* MAP CONTAINER */}
-        <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 h-[900px]">
           
-          {/* VISTA MAPA */}
-          <div className="lg:col-span-8 bg-white dark:bg-stone-900 rounded-[3.5rem] relative overflow-hidden shadow-2xl border border-stone-100 dark:border-stone-800 h-[650px] group">
-            {/* Background Grid Pattern */}
-            <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
+          {/* MAP CANVAS CON INTERACCIÓN ELÁSTICA */}
+          <div className="lg:col-span-8 bg-stone-950/40 rounded-[5rem] border border-white/5 relative overflow-hidden group shadow-[inset_0_0_150px_rgba(0,0,0,0.6)]">
+            <div className="absolute inset-0 grid-technical opacity-[0.04] pointer-events-none group-hover:opacity-[0.08] transition-opacity duration-[1.5s]"></div>
             
-            {/* Regional SVG Outline */}
-            <div className="absolute inset-0 flex items-center justify-center opacity-[0.05] dark:opacity-[0.1] pointer-events-none group-hover:opacity-10 transition-opacity">
-              <svg className="h-[90%] text-primary" viewBox="0 0 100 100" fill="currentColor">
-                <path d={TarapacaPath} />
+            {/* Silueta Regional Parallax */}
+            <div className="absolute inset-0 flex items-center justify-center opacity-[0.05] scale-110 blur-[2px] animate-float">
+              <svg className="h-[95%] text-white" viewBox="0 0 100 100" fill="currentColor">
+                <path d="M45,10 L55,15 L65,25 L70,45 L68,65 L60,85 L45,95 L35,80 L32,60 L35,40 L38,20 Z" />
               </svg>
             </div>
 
-            {/* Pins */}
+            {/* NODOS SENSOR DE PRECISIÓN */}
             {filteredActors.map(actor => (
               <div 
                 key={actor.id} 
-                className="absolute cursor-pointer transition-all duration-500" 
-                style={{ left: actor.x, top: actor.y, transform: 'translate(-50%, -50%)' }} 
-                onClick={() => setActiveActor(actor)}
+                className="absolute transition-all duration-1000 ease-out kinetic-layer" 
+                style={{ 
+                  left: actor.x, 
+                  top: actor.y, 
+                  "--depth": (1 + actor.id * 0.5) 
+                } as any} 
               >
-                <div className="relative flex items-center justify-center">
-                  {/* Pulse Effect */}
-                  <div className={`absolute inset-0 rounded-full bg-primary/20 animate-ping duration-[3000ms] ${activeActor?.id === actor.id ? 'opacity-100 scale-150' : 'opacity-0'}`}></div>
+                <div className="relative group cursor-pointer">
+                  {/* Micro-HUD al Hover */}
+                  <div className={`absolute inset-0 rounded-full border border-primary/40 scale-[3] animate-ping duration-[5s] ${activeActor?.id === actor.id ? 'opacity-100' : 'opacity-0'}`}></div>
                   
-                  {/* Pin Circle */}
-                  <div className={`size-14 bg-white dark:bg-earth-card rounded-[1.5rem] flex items-center justify-center shadow-2xl border transition-all duration-500 group/pin relative z-10 ${
+                  {/* Icono de Nodo Estilizado */}
+                  <div 
+                    onClick={() => setActiveActor(actor)}
+                    className={`size-20 rounded-[2rem] flex items-center justify-center border transition-all duration-700 relative z-10 ${
                     activeActor?.id === actor.id 
-                    ? 'border-primary ring-8 ring-primary/5 scale-125' 
-                    : 'border-stone-100 dark:border-stone-800 hover:scale-110 hover:border-primary/50'
+                    ? 'bg-white text-stone-950 border-white shadow-[0_0_80px_rgba(255,255,255,0.4)] scale-110 rotate-[15deg]' 
+                    : 'bg-stone-900/60 text-stone-500 border-white/5 hover:border-primary/40 hover:bg-stone-900 group-hover:scale-105 group-hover:-translate-y-2'
                   }`}>
-                    <span className={`material-symbols-outlined text-2xl transition-colors duration-300 ${activeActor?.id === actor.id ? 'text-primary font-bold' : 'text-stone-300 group-hover/pin:text-primary'}`}>
-                      {actor.icon}
-                    </span>
+                    <span className="material-symbols-outlined text-3xl font-light">{actor.icon}</span>
+                  </div>
+
+                  {/* Etiqueta Técnica Emergente y Clickable */}
+                  <div className={`absolute left-1/2 -translate-x-1/2 top-full mt-8 flex flex-col items-center transition-all duration-1000 ${activeActor?.id === actor.id ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-4 scale-90 group-hover:opacity-100 group-hover:translate-y-0'}`}>
+                    <div 
+                      onClick={() => handleOfficialRedirect(actor.url)}
+                      className="bg-white px-8 py-3 rounded-2xl shadow-[0_30px_60px_rgba(0,0,0,0.6)] flex items-center gap-6 whitespace-nowrap hover:bg-primary hover:text-white transition-all active:scale-95 group/tag"
+                    >
+                       <span className="text-[11px] font-mono font-black uppercase tracking-tighter">{actor.name}</span>
+                       <span className="text-[9px] font-mono font-bold text-stone-300 group-hover/tag:text-white/60">#ENLACE_OFICIAL</span>
+                       <span className="material-symbols-outlined text-sm group-hover/tag:translate-x-1 transition-transform">open_in_new</span>
+                    </div>
+                    <div className="text-[8px] font-mono font-black text-stone-600 uppercase mt-4 tracking-[0.5em] bg-stone-950/80 px-4 py-1.5 rounded-full border border-white/5">
+                      SINC: ONLINE_OK
+                    </div>
                   </div>
                 </div>
               </div>
             ))}
-
-            {/* Map Controls / Labels */}
-            <div className="absolute bottom-10 left-10 flex flex-col gap-2">
-               <div className="flex items-center gap-2 bg-white/80 dark:bg-stone-900/80 backdrop-blur px-4 py-2 rounded-xl border border-stone-100 dark:border-stone-800">
-                  <span className="size-2 rounded-full bg-primary animate-pulse"></span>
-                  <p className="text-[8px] font-black uppercase tracking-widest text-stone-500">Iquique Core Active</p>
-               </div>
-               <div className="flex items-center gap-2 bg-white/80 dark:bg-stone-900/80 backdrop-blur px-4 py-2 rounded-xl border border-stone-100 dark:border-stone-800">
-                  <span className="size-2 rounded-full bg-intel animate-pulse"></span>
-                  <p className="text-[8px] font-black uppercase tracking-widest text-stone-500">ZOFRI Hub Sincronizado</p>
-               </div>
-            </div>
           </div>
 
-          {/* PANEL DE DETALLE DE NODO */}
-          <div className="lg:col-span-4 h-full">
-            <div className="bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-[3.5rem] h-full flex flex-col p-10 shadow-xl relative overflow-hidden">
-               <div className="absolute top-0 right-0 p-24 opacity-5 pointer-events-none rotate-12">
-                  <span className="material-symbols-outlined text-[10rem] text-primary">radar</span>
-               </div>
+          {/* PANEL DE DATOS LATERAL (CRISTAL) */}
+          <div className="lg:col-span-4 kinetic-layer" style={{"--depth": 6} as any}>
+            <div className="glass-liquid rounded-[5rem] h-full flex flex-col overflow-hidden shadow-2xl relative">
+               <div className="absolute inset-0 grid-technical opacity-[0.02] pointer-events-none"></div>
 
                {activeActor ? (
-                 <div className="flex flex-col h-full animate-fade-in space-y-8 relative z-10 text-left">
-                    <div className="space-y-4">
-                       <span className="px-4 py-1.5 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest border border-primary/10 inline-block">
-                         {activeActor.type}
-                       </span>
-                       <h4 className="text-3xl font-black text-stone-900 dark:text-white uppercase tracking-tighter leading-tight">
+                 <div className="flex flex-col h-full animate-fade-in p-16 text-left relative z-10">
+                    <div className="space-y-10">
+                       <p className="text-[11px] font-mono font-black text-primary uppercase tracking-[0.8em] flex items-center gap-3">
+                          <span className="size-1.5 bg-primary rounded-full"></span>
+                          Access.Node_Secure
+                       </p>
+                       <h4 className="text-6xl font-black text-white uppercase tracking-tighter leading-[0.9] font-display fluid-title">
                          {activeActor.name}
                        </h4>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                       <div className="bg-stone-50 dark:bg-stone-800/50 p-6 rounded-[2rem] border border-stone-100 dark:border-stone-800">
-                          <p className="text-[8px] font-black text-stone-400 uppercase tracking-widest mb-2">Impacto Circular</p>
-                          <p className="text-2xl font-black text-primary">92%</p>
-                       </div>
-                       <div className="bg-stone-50 dark:bg-stone-800/50 p-6 rounded-[2rem] border border-stone-100 dark:border-stone-800">
-                          <p className="text-[8px] font-black text-stone-400 uppercase tracking-widest mb-2">Conexiones</p>
-                          <p className="text-2xl font-black text-primary">15+</p>
+                       <div className="flex gap-4">
+                          <span className="px-8 py-2.5 rounded-full bg-white/5 border border-white/5 text-stone-400 text-[10px] font-mono font-black uppercase tracking-widest">
+                            Cat_ID: {activeActor.type}
+                          </span>
                        </div>
                     </div>
 
-                    <div className="space-y-4 pt-4">
-                       <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest ml-1">Estatus del Nodo</p>
-                       <div className="space-y-2">
-                          {[
-                            { label: 'Sostenibilidad', val: 85, color: 'bg-primary' },
-                            { label: 'Transparencia', val: 94, color: 'bg-intel' },
-                            { label: 'Innovación', val: 78, color: 'bg-blue-500' }
-                          ].map(stat => (
-                            <div key={stat.label} className="space-y-1.5">
-                               <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-stone-500">
-                                  <span>{stat.label}</span>
-                                  <span>{stat.val}%</span>
+                    <div className="flex-1 space-y-16 mt-24">
+                       <div className="space-y-10">
+                          <p className="text-[11px] font-mono font-black text-stone-700 uppercase tracking-[0.5em] border-b border-white/5 pb-5">Operational_Metrics</p>
+                          <div className="space-y-12">
+                             {[
+                               { label: 'Simbiosis de Red', val: 92, color: 'bg-primary' },
+                               { label: 'Resiliencia Circular', val: 78, color: 'bg-intel' }
+                             ].map(stat => (
+                               <div key={stat.label} className="space-y-5">
+                                  <div className="flex justify-between text-[12px] font-mono font-black uppercase tracking-widest text-stone-500">
+                                     <span>{stat.label}</span>
+                                     <span className="text-white">{stat.val}%</span>
+                                  </div>
+                                  <div className="h-[2px] w-full bg-stone-900 rounded-full overflow-hidden">
+                                     <div className={`h-full ${stat.color} transition-all duration-[3s] ease-out shadow-[0_0_25px_rgba(255,255,255,0.15)]`} style={{ width: `${stat.val}%` }}></div>
+                                  </div>
                                </div>
-                               <div className="h-1 w-full bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden">
-                                  <div className={`h-full ${stat.color} transition-all duration-1000`} style={{ width: `${stat.val}%` }}></div>
-                               </div>
-                            </div>
-                          ))}
+                             ))}
+                          </div>
                        </div>
                     </div>
 
-                    <div className="flex-1"></div>
-
-                    <button 
-                      onClick={() => setView('discovery')}
-                      className="w-full h-16 bg-stone-900 dark:bg-white dark:text-stone-900 text-white rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-primary hover:text-white transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3"
-                    >
-                      <span className="material-symbols-outlined text-sm">hub</span>
-                      Analizar Sinergias
-                    </button>
+                    <div className="pt-12 mt-auto space-y-4">
+                      <button 
+                        onClick={() => handleOfficialRedirect(activeActor.url)}
+                        className="w-full h-20 border border-white/10 text-stone-400 rounded-3xl font-mono font-black text-[10px] uppercase tracking-[0.4em] hover:bg-white hover:text-stone-950 transition-all flex items-center justify-center gap-4"
+                      >
+                         <span className="material-symbols-outlined text-xl">link</span>
+                         Visitar Portal Oficial
+                      </button>
+                      <button 
+                        onClick={() => setView('discovery')}
+                        className="w-full h-24 bg-primary text-white rounded-[2.5rem] font-mono font-black text-[13px] uppercase tracking-[0.5em] hover:bg-white hover:text-stone-950 transition-all duration-700 shadow-3xl flex items-center justify-center gap-6 group/btn"
+                      >
+                        <span className="material-symbols-outlined text-2xl group-hover/btn:rotate-[360deg] duration-1000 transition-transform">bolt</span>
+                        Auditar Nodo
+                      </button>
+                    </div>
                  </div>
                ) : (
-                 <div className="h-full flex flex-col items-center justify-center text-center space-y-6 opacity-30 grayscale pointer-events-none">
-                    <span className="material-symbols-outlined text-[100px] text-stone-200">near_me</span>
-                    <div className="space-y-2">
-                       <p className="text-2xl font-black uppercase tracking-tighter">Nodo Standby</p>
-                       <p className="text-sm font-bold max-w-[200px] mx-auto leading-relaxed italic">
-                         Selecciona un actor en el mapa para inicializar el perfil de impacto regional.
-                       </p>
+                 <div className="h-full flex flex-col items-center justify-center text-center p-20 space-y-14">
+                    <div className="relative size-56 opacity-10">
+                       <div className="absolute inset-0 border border-stone-800 rounded-full animate-spin duration-[25s]"></div>
+                       <div className="absolute inset-10 border border-stone-800 rounded-full animate-reverse-spin duration-[18s]"></div>
+                       <span className="absolute inset-0 flex items-center justify-center material-symbols-outlined text-8xl text-stone-600 animate-pulse">radar</span>
+                    </div>
+
+                    <div className="space-y-8">
+                       <p className="text-5xl font-black text-white/20 uppercase tracking-tighter font-display italic">En Espera</p>
+                       <div className="space-y-4">
+                          <p className="text-[11px] font-mono font-black text-stone-700 uppercase tracking-[0.6em] leading-relaxed">
+                            Sincronice un activo <br/> para iniciar protocolo.
+                          </p>
+                       </div>
                     </div>
                  </div>
                )}
@@ -208,26 +238,31 @@ export const Home: React.FC<HomeProps> = ({ setView }) => {
         </div>
       </section>
 
-      {/* ATMÓSFERA 3: CTA FINAL */}
-      <section className="w-full max-w-5xl bg-primary p-12 md:p-20 rounded-[4rem] text-white flex flex-col items-center gap-10 shadow-2xl relative overflow-hidden group">
-        <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
-        <div className="absolute top-0 right-0 p-40 bg-white/10 rounded-full blur-[100px] -mr-20 -mt-20"></div>
-        
-        <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-center leading-[0.9] relative z-10">
-          ¿LISTO PARA TRANSFORMAR <br/><span className="text-primary-light">TU PROYECTO?</span>
-        </h2>
-        <p className="text-lg md:text-xl text-primary-light/80 font-medium text-center max-w-2xl relative z-10">
-          Únete a la red más grande de economía circular del norte de Chile. Financiamiento, mentoría y tecnología a tu alcance.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-6 relative z-10">
-           <button onClick={() => setView('login')} className="bg-white text-primary px-12 py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-xl active:scale-95">
-             Empezar Ahora
-           </button>
-           <button onClick={() => setView('contact')} className="bg-transparent border-2 border-white/30 text-white px-12 py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all active:scale-95">
-             Saber Más
-           </button>
+      {/* FOOTER CTA CON PROFUNDIDAD EXTREMA */}
+      <section className="w-full max-w-7xl px-8 py-60">
+        <div className="bg-white text-stone-950 rounded-[7rem] p-32 flex flex-col items-center gap-20 relative overflow-hidden group shadow-[0_100px_150px_-50px_rgba(0,0,0,0.5)]">
+          <div className="absolute inset-0 grid-technical opacity-5 pointer-events-none"></div>
+          <div className="absolute -bottom-40 -right-40 size-[600px] bg-primary/20 rounded-full blur-[150px] group-hover:bg-primary/40 transition-all duration-[2s]"></div>
+          
+          <div className="relative z-10 text-center space-y-12">
+            <h2 className="text-8xl md:text-[13rem] font-black uppercase tracking-tight leading-[0.8] font-display fluid-title">
+              NUEVA <br/><span className="text-primary italic">ERA</span>
+            </h2>
+            <p className="text-3xl md:text-4xl text-stone-500 font-mono font-medium max-w-4xl mx-auto lowercase leading-tight tracking-tighter">
+              Diseñamos las capas de datos necesarias para una economía de <span className="text-stone-950 font-black">residuo cero absoluta</span>.
+            </p>
+          </div>
+          
+          <button onClick={() => setView('login')} className="relative z-10 bg-stone-950 text-white px-32 py-12 rounded-full font-mono font-black text-[13px] uppercase tracking-[0.6em] hover:bg-primary transition-all duration-700 shadow-3xl hover:-translate-y-4">
+            Iniciar Sincronización
+          </button>
         </div>
       </section>
+
+      <style>{`
+        @keyframes reverse-spin { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+        .animate-reverse-spin { animation: reverse-spin linear infinite; }
+      `}</style>
     </div>
   );
 };
